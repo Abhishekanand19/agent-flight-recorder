@@ -29,3 +29,4 @@ DO NOT add features beyond these. Deadline-critical.
 - The demo failure must be DETERMINISTIC: stale KB entry + temp 0.8
 - After every feature: run it, verify spans appear in SigNoz, then commit
 - Prefer boring, readable code over clever code (judges read the repo)
+- After every successful verifier PASS, git commit with a conventional-commit message (feat/fix/docs/chore) AND immediately git push origin main. Never leave commits local.
