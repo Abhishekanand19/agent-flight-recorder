@@ -1,0 +1,106 @@
+{
+  "title": "Agent Flight Recorder",
+  "description": "Token cost, failure rate, counterfactual replay matrix, and investigator confidence for the support agent.",
+  "tags": ["flight-recorder", "hackathon"],
+  "variables": {},
+  "layout": [
+    { "i": "tokens-per-step", "x": 0, "y": 0, "w": 6, "h": 9 },
+    { "i": "failure-rate", "x": 6, "y": 0, "w": 6, "h": 9 },
+    { "i": "replay-matrix", "x": 0, "y": 9, "w": 6, "h": 9 },
+    { "i": "investigator-confidence", "x": 6, "y": 9, "w": 6, "h": 9 }
+  ],
+  "widgets": [
+    {
+      "id": "tokens-per-step",
+      "title": "LLM tokens per step (by service)",
+      "description": "sum of llm.tokens on llm.chat spans; the token cost of every agent, replay, and investigation step",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "isStacked": false,
+      "yAxisUnit": "none",
+      "query": {
+        "queryType": "clickhouse_sql",
+        "promql": [],
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "legend": "{{service}}",
+            "disabled": false,
+            "query": "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts, `resource_string_service$$name` AS service, sum(attributes_number['llm.tokens']) AS tokens FROM signoz_traces.distributed_signoz_index_v3 WHERE name = 'llm.chat' AND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} GROUP BY ts, service ORDER BY ts"
+          }
+        ]
+      }
+    },
+    {
+      "id": "failure-rate",
+      "title": "Agent tool failure rate",
+      "description": "share of tool.* spans ending in ERROR",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "isStacked": false,
+      "yAxisUnit": "percentunit",
+      "query": {
+        "queryType": "clickhouse_sql",
+        "promql": [],
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "legend": "failure rate",
+            "disabled": false,
+            "query": "SELECT toStartOfInterval(timestamp, INTERVAL 5 MINUTE) AS ts, countIf(status_code_string = 'Error') / count() AS failure_rate FROM signoz_traces.distributed_signoz_index_v3 WHERE name LIKE 'tool.%' AND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} GROUP BY ts ORDER BY ts"
+          }
+        ]
+      }
+    },
+    {
+      "id": "replay-matrix",
+      "title": "Replay success matrix (latest run per config)",
+      "description": "counterfactual configs vs outcome; cf-5 carries the structural fix",
+      "panelTypes": "table",
+      "opacity": "1",
+      "nullZeroValues": "zero",
+      "isStacked": false,
+      "yAxisUnit": "none",
+      "query": {
+        "queryType": "clickhouse_sql",
+        "promql": [],
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "legend": "",
+            "disabled": false,
+            "query": "SELECT attributes_string['replay.config_id'] AS config, argMax(attributes_string['replay.model'], timestamp) AS model, argMax(attributes_number['replay.temperature'], timestamp) AS temperature, argMax(attributes_bool['replay.fix_applied'], timestamp) AS fix_applied, argMax(attributes_bool['replay.success'], timestamp) AS success FROM signoz_traces.distributed_signoz_index_v3 WHERE name = 'replay_run' GROUP BY config ORDER BY config"
+          }
+        ]
+      }
+    },
+    {
+      "id": "investigator-confidence",
+      "title": "Investigator confidence over time",
+      "description": "investigation.confidence on crash-investigator root spans",
+      "panelTypes": "graph",
+      "opacity": "1",
+      "nullZeroValues": "null",
+      "isStacked": false,
+      "yAxisUnit": "none",
+      "query": {
+        "queryType": "clickhouse_sql",
+        "promql": [],
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "legend": "confidence %",
+            "disabled": false,
+            "query": "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts, max(attributes_number['investigation.confidence']) AS confidence FROM signoz_traces.distributed_signoz_index_v3 WHERE name = 'investigation' AND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} GROUP BY ts ORDER BY ts"
+          }
+        ]
+      }
+    }
+  ]
+}

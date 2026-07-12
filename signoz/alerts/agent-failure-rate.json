@@ -1,0 +1,39 @@
+{
+  "alert": "Agent failure rate spike",
+  "alertType": "TRACES_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "evalWindow": "5m0s",
+  "frequency": "1m0s",
+  "condition": {
+    "compositeQuery": {
+      "queryType": "clickhouse_sql",
+      "panelType": "graph",
+      "unit": "",
+      "builderQueries": {},
+      "promQueries": {},
+      "chQueries": {
+        "A": {
+          "name": "A",
+          "legend": "failure rate",
+          "disabled": false,
+          "query": "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts, countIf(status_code_string = 'Error') / count() AS value FROM signoz_traces.distributed_signoz_index_v3 WHERE name LIKE 'tool.%' AND `resource_string_service$$name` = 'support-agent' AND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} GROUP BY ts ORDER BY ts"
+        }
+      }
+    },
+    "op": "1",
+    "target": 0.5,
+    "matchType": "1",
+    "selectedQueryName": "A"
+  },
+  "labels": {
+    "severity": "warning"
+  },
+  "annotations": {
+    "summary": "Support-agent tool failure rate exceeded 50% over the last 5 minutes.",
+    "description": "The agent is failing its tool calls. Flight-recorder runbook: grab a failing trace id from SigNoz, replay the counterfactuals with `python -m replay.engine --trace-id <id>`, then run `python -m investigator.investigate --trace-id <id>` (or open the diff UI at http://localhost:5173) to get the root-cause verdict."
+  },
+  "version": "v4",
+  "source": "http://localhost:8080/alerts",
+  "disabled": false,
+  "preferredChannels": ["flight-recorder-demo"]
+}
