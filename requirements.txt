@@ -1,0 +1,6 @@
+langgraph
+langchain-groq
+opentelemetry-sdk
+opentelemetry-exporter-otlp
+python-dotenv
+pytest
