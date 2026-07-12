@@ -20,7 +20,9 @@ SELECT
     attributes_number,
     status_code_string,
     status_message,
-    timestamp
+    timestamp,
+    toUnixTimestamp64Nano(timestamp) AS start_ns,
+    duration_nano
 FROM signoz_traces.distributed_signoz_index_v3
 WHERE trace_id = '{trace_id}'
 ORDER BY timestamp
