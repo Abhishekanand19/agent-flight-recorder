@@ -9,7 +9,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
-from agent.llm import invoke_llm, make_llm
+from agent.llm import MODEL, TEMPERATURE, invoke_llm, make_llm
 from agent.tools import check_order, issue_refund, search_kb
 
 # Phrasing note: telling llama-3.3 about "tools" in the system prompt makes it
@@ -28,13 +28,13 @@ class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
 
 
-def build_graph():
+def build_graph(model: str = MODEL, temperature: float = TEMPERATURE):
     tools = [search_kb, check_order, issue_refund]
-    llm = make_llm(tools)
+    llm = make_llm(tools, model=model, temperature=temperature)
 
     def agent_node(state: AgentState) -> AgentState:
         messages = [SystemMessage(SYSTEM_PROMPT)] + state["messages"]
-        return {"messages": [invoke_llm(llm, messages)]}
+        return {"messages": [invoke_llm(llm, messages, model=model, temperature=temperature)]}
 
     def route(state: AgentState) -> str:
         last = state["messages"][-1]

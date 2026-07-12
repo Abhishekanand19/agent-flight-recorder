@@ -11,7 +11,9 @@ Reliability notes (llama-3.3 on Groq, worse at temperature 0.8):
 """
 
 import json
+import os
 import re
+import time
 import uuid
 
 from groq import BadRequestError
@@ -25,9 +27,26 @@ TEMPERATURE = 0.8
 MAX_ATTEMPTS = 4
 
 _FUNCTION_TAG = re.compile(r"<function=(\w+)\s*(\{.*?\})", re.DOTALL)
+_RETRY_DELAY = re.compile(r"[Rr]etry(?:Delay'?:? '?| in )(\d+(?:\.\d+)?)s")
+
+
+def _rate_limit_delay(exc: Exception) -> float | None:
+    """If exc is a provider rate limit (429), return seconds to wait."""
+    text = str(exc)
+    if "429" not in text and "RESOURCE_EXHAUSTED" not in text and "rate limit" not in text.lower():
+        return None
+    match = _RETRY_DELAY.search(text)
+    return float(match.group(1)) + 2 if match else 60.0
 
 
 def make_llm(tools: list, model: str = MODEL, temperature: float = TEMPERATURE):
+    if model.startswith("gemini"):
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        llm = ChatGoogleGenerativeAI(
+            model=model, temperature=temperature, api_key=os.getenv("GEMINI_API_KEY")
+        )
+        return llm.bind_tools(tools)
     llm = ChatGroq(model=model, temperature=temperature)
     return llm.bind_tools(tools).bind(parallel_tool_calls=False)
 
@@ -69,6 +88,12 @@ def invoke_llm(llm, messages, model: str = MODEL, temperature: float = TEMPERATU
                 if attempt == MAX_ATTEMPTS:
                     raise
                 span.add_event("groq_tool_use_failed_retry", {"attempt": attempt})
+            except Exception as exc:
+                delay = _rate_limit_delay(exc)
+                if delay is None or attempt == MAX_ATTEMPTS:
+                    raise
+                span.add_event("rate_limited_waiting", {"attempt": attempt, "delay_s": delay})
+                time.sleep(delay)
         usage = response.usage_metadata or {}
         span.set_attribute("llm.tokens", usage.get("total_tokens", 0))
         return response

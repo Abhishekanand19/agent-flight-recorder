@@ -20,6 +20,8 @@ DO NOT add features beyond these. Deadline-critical.
 - Replay: python -m replay.engine --trace-id <id>
 - UI: cd ui && npm run dev
 - Tests: pytest -x
+- SigNoz UI: http://localhost:8080 (v0.99.0 — NOT 3301)
+- OTLP ingestion: localhost:4317 (gRPC), localhost:4318 (HTTP)
 
 ## Rules
 - Every LLM call and tool call = its own OTel span with attributes:
