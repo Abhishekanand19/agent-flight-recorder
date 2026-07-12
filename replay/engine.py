@@ -21,12 +21,16 @@ from agent.graph import build_graph
 from agent.telemetry import get_tracer, init_telemetry, shutdown_telemetry
 from agent.tools import DECOMMISSIONED_METHODS
 
-# Max 4 counterfactual runs per incident (CLAUDE.md rule / free-tier limits).
+# Max 4 counterfactual runs per incident (CLAUDE.md rule / free-tier limits),
+# plus cf-5: the fix-validation run. It uses the SAME model and temperature as
+# the original incident, with the corrected KB entry applied — so the only
+# changed variable is the structural fix.
 CONFIGS = [
     {"config_id": "cf-1", "model": "llama-3.3-70b-versatile", "temperature": 0.8},
     {"config_id": "cf-2", "model": "llama-3.3-70b-versatile", "temperature": 0.0},
     {"config_id": "cf-3", "model": "gemini-2.5-flash", "temperature": 0.8},
     {"config_id": "cf-4", "model": "gemini-2.5-flash", "temperature": 0.0},
+    {"config_id": "cf-5", "model": "llama-3.3-70b-versatile", "temperature": 0.8, "fix_applied": True},
 ]
 
 SECONDS_BETWEEN_RUNS = 5
@@ -89,14 +93,18 @@ def classify_success(messages: list) -> bool:
 
 def run_replay(config: dict, request: str, original_trace_id: str) -> dict:
     """Run one counterfactual config under its own linked trace."""
+    fix_applied = bool(config.get("fix_applied"))
     with get_tracer().start_as_current_span("replay_run") as span:
         trace_id = format(span.get_span_context().trace_id, "032x")
         span.set_attribute("replay.of", original_trace_id)
         span.set_attribute("replay.config_id", config["config_id"])
         span.set_attribute("replay.model", config["model"])
         span.set_attribute("replay.temperature", config["temperature"])
+        span.set_attribute("replay.fix_applied", fix_applied)
         success = False
         error = None
+        if fix_applied:
+            kb.set_entries(kb.FIXED_ENTRIES)
         try:
             graph = build_graph(model=config["model"], temperature=config["temperature"])
             result = graph.invoke(
@@ -110,6 +118,9 @@ def run_replay(config: dict, request: str, original_trace_id: str) -> dict:
             error = f"{type(exc).__name__}: {exc}"
             span.record_exception(exc)
             span.set_status(Status(StatusCode.ERROR, str(exc)))
+        finally:
+            if fix_applied:
+                kb.set_entries(kb.ENTRIES)
         span.set_attribute("replay.success", success)
     return {**config, "success": success, "trace_id": trace_id, "error": error}
 
@@ -117,6 +128,11 @@ def run_replay(config: dict, request: str, original_trace_id: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Replay a SigNoz trace under counterfactual configs.")
     parser.add_argument("--trace-id", required=True, help="original trace id (32 hex chars)")
+    parser.add_argument(
+        "--config",
+        choices=[c["config_id"] for c in CONFIGS],
+        help="run only this config (default: all)",
+    )
     args = parser.parse_args()
 
     load_dotenv()
@@ -136,19 +152,22 @@ def main() -> None:
     print(f"kb context: {json.dumps([e['id'] for e in incident['kb_context']])}")
     print()
 
+    configs = [c for c in CONFIGS if args.config is None or c["config_id"] == args.config]
     results = []
-    for i, config in enumerate(CONFIGS):
-        print(f"replaying {config['config_id']}: {config['model']} @ temp={config['temperature']} ...")
+    for i, config in enumerate(configs):
+        fix_note = " [fix applied]" if config.get("fix_applied") else ""
+        print(f"replaying {config['config_id']}: {config['model']} @ temp={config['temperature']}{fix_note} ...")
         results.append(run_replay(config, incident["request"], args.trace_id))
-        if i < len(CONFIGS) - 1:
-            next_is_gemini = CONFIGS[i + 1]["model"].startswith("gemini")
+        if i < len(configs) - 1:
+            next_is_gemini = configs[i + 1]["model"].startswith("gemini")
             time.sleep(SECONDS_BEFORE_GEMINI if next_is_gemini else SECONDS_BETWEEN_RUNS)
 
     print()
-    print(f"{'config':<7} {'model':<24} {'temp':<5} {'result':<7} replay trace_id")
+    print(f"{'config':<7} {'model':<24} {'temp':<5} {'fix':<5} {'result':<7} replay trace_id")
     for r in results:
         verdict = "ERROR" if r["error"] else ("PASS" if r["success"] else "FAIL")
-        print(f"{r['config_id']:<7} {r['model']:<24} {r['temperature']:<5} {verdict:<7} {r['trace_id']}")
+        fix = "yes" if r.get("fix_applied") else "no"
+        print(f"{r['config_id']:<7} {r['model']:<24} {r['temperature']:<5} {fix:<5} {verdict:<7} {r['trace_id']}")
         if r["error"]:
             print(f"        error: {r['error']}")
 

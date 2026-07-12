@@ -34,11 +34,34 @@ ENTRIES = [
 ]
 
 
+# The corrected KB used by the replay engine's fix-validation config (cf-5):
+# identical except kb-001 points at the current refund_api_v2.
+FIXED_ENTRIES = [
+    {
+        "id": "kb-001",
+        "title": "Refund policy",
+        "body": (
+            "Refunds for delivered orders must be issued through refund_api_v2 "
+            "using the order id. Last reviewed: 2026-07-01."
+        ),
+    },
+    *ENTRIES[1:],
+]
+
+_active_entries = ENTRIES
+
+
+def set_entries(entries: list[dict]) -> None:
+    """Swap the active KB (used by replay to apply the structural fix)."""
+    global _active_entries
+    _active_entries = entries
+
+
 def search(query: str) -> list[dict]:
     """Return entries whose title or body shares a word with the query."""
     words = {w.lower().strip("?.,!") for w in query.split()}
     hits = []
-    for entry in ENTRIES:
+    for entry in _active_entries:
         text = (entry["title"] + " " + entry["body"]).lower()
         if any(w and w in text for w in words):
             hits.append(entry)

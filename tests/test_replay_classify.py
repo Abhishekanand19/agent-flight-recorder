@@ -2,6 +2,7 @@
 
 from langchain_core.messages import AIMessage, HumanMessage
 
+from agent import kb
 from replay.engine import classify_success
 
 
@@ -37,3 +38,15 @@ def test_never_touching_the_order_is_failure():
         _ai([{"name": "search_kb", "args": {"query": "refund policy"}, "id": "1"}]),
     ]
     assert classify_success(messages) is False
+
+
+def test_fixed_kb_recommends_v2_and_restores():
+    try:
+        kb.set_entries(kb.FIXED_ENTRIES)
+        fixed = next(e for e in kb.search("refund policy") if e["id"] == "kb-001")
+        assert "refund_api_v2" in fixed["body"]
+        assert "refund_api_v1" not in fixed["body"]
+    finally:
+        kb.set_entries(kb.ENTRIES)
+    stale = next(e for e in kb.search("refund policy") if e["id"] == "kb-001")
+    assert "refund_api_v1" in stale["body"]
