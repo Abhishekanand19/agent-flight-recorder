@@ -44,7 +44,10 @@ def provision_dashboard() -> None:
     for dash in existing:
         title = (dash.get("data") or {}).get("title")
         if title == data["title"]:
-            print(f"dashboard already exists: '{title}' (id {dash.get('id') or dash.get('uuid')})")
+            ident = dash.get("id") or dash.get("uuid")
+            request("PUT", f"/api/v1/dashboards/{ident}", data)
+            print(f"dashboard updated in place: '{title}' (id {ident})")
+            print(f"  open: {SIGNOZ}/dashboard/{ident}")
             return
     created = request("POST", "/api/v1/dashboards", data)
     ident = (created.get("data") or {}).get("id") or (created.get("data") or {}).get("uuid")
