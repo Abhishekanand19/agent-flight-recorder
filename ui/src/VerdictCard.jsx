@@ -31,12 +31,30 @@ export default function VerdictCard({ traceId }) {
   return (
     <div className="panel verdict">
       <h2>Crash investigation</h2>
-      {!verdict && (
-        <button className="investigate" onClick={investigate} disabled={busy}>
-          {busy ? "investigating… (one Gemini call)" : "Investigate"}
-        </button>
+      {!verdict && !busy && (
+        <div className="empty-state">
+          <p className="empty-title">No investigation cached for this incident</p>
+          <p className="empty-hint">
+            One click runs the Crash Investigator: structured trace diff, a single
+            Gemini call, and a root-cause verdict — itself fully traced in SigNoz.
+          </p>
+          <button className="investigate" onClick={investigate}>
+            Investigate
+          </button>
+        </div>
       )}
-      {error && <p className="status error">{error}</p>}
+      {busy && (
+        <div className="empty-state">
+          <span className="spinner" aria-label="investigating" />
+          <p className="empty-hint">Investigating — diffing replays, one Gemini call…</p>
+        </div>
+      )}
+      {error && (
+        <div className="empty-state error-state">
+          <p className="empty-title">Investigation failed</p>
+          <p className="empty-hint">{error}</p>
+        </div>
+      )}
       {verdict && (
         <div className="card">
           <p className="root-cause">{verdict.root_cause}</p>

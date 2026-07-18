@@ -19,10 +19,12 @@ export default function Matrix({ matrix }) {
             <tr key={m.config_id}>
               <td>{m.config_id}</td>
               <td>{m.model}</td>
-              <td>{m.temperature}</td>
-              <td>{m.fix_applied ? "yes" : "no"}</td>
-              <td className={m.success ? "pass" : "fail"}>
-                {m.success ? "PASS" : "FAIL"}
+              <td>{Number(m.temperature).toFixed(1)}</td>
+              <td>{m.fix_applied ? <span className="badge badge-fix">FIX</span> : "—"}</td>
+              <td>
+                <span className={`badge ${m.success ? "badge-pass" : "badge-fail"}`}>
+                  {m.success ? "PASS" : "FAIL"}
+                </span>
               </td>
             </tr>
           ))}

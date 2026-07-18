@@ -4,6 +4,20 @@
 
 Built for the SigNoz hackathon.
 
+## Why Flight Recorder?
+
+Traditional observability answers one question: **"What failed?"**
+
+Agent Flight Recorder answers the ones that actually matter for AI agents:
+
+- **Why** did it fail?
+- **What would have happened** under a different model or temperature?
+- **What actually fixes it** — and can the fix be **verified automatically**?
+
+That's what Flight Recorder does: every incident is recorded, replayed under
+counterfactual configurations, diagnosed by an instrumented investigator, and
+closed with a validated fix — all on OpenTelemetry and SigNoz.
+
 ## The problem
 
 LLM agents fail silently and non-reproducibly. Traditional observability tells you **what** happened — a red span, a stack trace, a 500. It cannot tell you **why** an agent made a bad decision, whether a different model or temperature would have avoided it, or what the minimal fix is. When a support agent refuses a valid refund at 2am, "the span errored" is not an answer.

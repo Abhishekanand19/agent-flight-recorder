@@ -34,8 +34,8 @@ export default function Waterfall({ title, spans, divergence, failSide }) {
           >
             <span className="label">
               {s.name}
-              {s.error && <em className="err-tag">ERR</em>}
-              {isDivergent && <em className="div-tag">DIVERGES</em>}
+              {s.error && <em className="badge badge-err">ERR</em>}
+              {isDivergent && <em className="badge badge-diverge">DIVERGES</em>}
             </span>
             <span className="track">
               <span

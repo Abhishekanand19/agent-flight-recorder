@@ -47,8 +47,28 @@ export default function App() {
         </form>
       </header>
 
-      {loading && <p className="status">loading incident…</p>}
-      {error && <p className="status error">{error}</p>}
+      {loading && (
+        <div className="waterfalls" aria-label="loading">
+          <div className="waterfall skeleton-panel">
+            <div className="skeleton skeleton-title" />
+            {[...Array(6)].map((_, i) => (
+              <div className="skeleton skeleton-row" key={i} />
+            ))}
+          </div>
+          <div className="waterfall skeleton-panel">
+            <div className="skeleton skeleton-title" />
+            {[...Array(6)].map((_, i) => (
+              <div className="skeleton skeleton-row" key={i} />
+            ))}
+          </div>
+        </div>
+      )}
+      {error && (
+        <div className="empty-state error-state">
+          <p className="empty-title">Couldn't load this incident</p>
+          <p className="empty-hint">{error} — is the API running on port 8000?</p>
+        </div>
+      )}
 
       {incident && (
         <>
@@ -66,7 +86,14 @@ export default function App() {
                 divergence={incident.divergence}
               />
             ) : (
-              <p className="status">no successful fix-applied replay found</p>
+              <div className="waterfall empty-state">
+                <p className="empty-title">No validated fix yet</p>
+                <p className="empty-hint">
+                  Run the replay engine with the fix config to give this incident
+                  its passing counterpart: python -m replay.engine --trace-id …
+                  --config cf-5
+                </p>
+              </div>
             )}
           </section>
 
