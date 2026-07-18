@@ -33,8 +33,10 @@ unprocessed.
 - Agent: python -m agent.main
 - Replay: python -m replay.engine --trace-id <id>
 - Investigate: python -m investigator.investigate --trace-id <id>
-- UI: cd ui && npm run dev
+- UI: cd ui; npm run dev
 - Tests: pytest -x
+- NOTE (Windows PowerShell): chain commands with ; not && (PowerShell 5.1
+  rejects &&). Example: cd ui; npm run dev
 
 ## Rules
 - Every LLM call and tool call = its own OTel span with attributes:
