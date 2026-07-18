@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 
-export default function VerdictCard({ traceId }) {
-  const [verdict, setVerdict] = useState(null);
+export default function VerdictCard({ traceId, onVerdict }) {
+  const [verdict, setVerdictState] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+
+  const setVerdict = (v) => {
+    setVerdictState(v);
+    if (onVerdict) onVerdict(v);
+  };
 
   // Show a cached investigation instantly if one exists.
   useEffect(() => {

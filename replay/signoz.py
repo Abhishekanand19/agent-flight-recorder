@@ -63,6 +63,11 @@ def _validate_trace_id(trace_id: str) -> None:
         raise ValueError(f"trace id must be 32 hex chars, got: {trace_id!r}")
 
 
+def query(sql: str) -> list[dict]:
+    """Run any read-only SQL against SigNoz's ClickHouse, rows as dicts."""
+    return _clickhouse(f"{sql} FORMAT JSONEachRow")
+
+
 def fetch_trace(trace_id: str) -> list[dict]:
     """Return the trace's spans as dicts, oldest first. Raises if not found."""
     _validate_trace_id(trace_id)
