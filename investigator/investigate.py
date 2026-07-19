@@ -175,7 +175,7 @@ def print_verdict_card(verdict: dict, diff: dict) -> None:
     print(line)
 
 
-def investigate(original_trace_id: str) -> dict:
+def investigate(original_trace_id: str, triggered_by: str = "manual") -> dict:
     """Run the full investigation under its own trace. Returns the verdict."""
     from replay.signoz import fetch_replay_runs, fetch_trace
 
@@ -183,6 +183,7 @@ def investigate(original_trace_id: str) -> dict:
     with tracer.start_as_current_span("investigation") as span:
         investigation_trace_id = format(span.get_span_context().trace_id, "032x")
         span.set_attribute("investigation.of", original_trace_id)
+        span.set_attribute("investigation.triggered_by", triggered_by)
 
         with tracer.start_as_current_span("fetch.traces") as fetch_span:
             original_spans = fetch_trace(original_trace_id)
@@ -218,11 +219,17 @@ def investigate(original_trace_id: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Investigate a failing trace via its replays.")
     parser.add_argument("--trace-id", required=True, help="original trace id (32 hex chars)")
+    parser.add_argument("--triggered-by", default="manual", help="what initiated this (manual/alert)")
+    parser.add_argument("--json-out", default=None, help="also write the verdict JSON to this path")
     args = parser.parse_args()
 
     load_dotenv()
     init_telemetry(service_name="crash-investigator")
-    investigate(args.trace_id)
+    verdict = investigate(args.trace_id, triggered_by=args.triggered_by)
+    if args.json_out:
+        from pathlib import Path
+
+        Path(args.json_out).write_text(json.dumps(verdict, indent=1))
     shutdown_telemetry()
 
 

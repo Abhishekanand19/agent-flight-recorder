@@ -24,21 +24,62 @@ function Tile({ label, value, sub }) {
   );
 }
 
+const PIPELINE_STAGES = [
+  { key: "alert", icon: "🚨", label: "Alert received" },
+  { key: "replaying", icon: "⚙", label: "Replaying counterfactuals…" },
+  { key: "investigating", icon: "🔍", label: "Investigating…" },
+  { key: "done", icon: "✅", label: "Root cause found" },
+];
+
+function ProgressStrip({ active }) {
+  if (!active || active.stage === "idle") return null;
+  const reached = { replaying: 1, investigating: 2, done: 3, failed: 2 }[active.stage] ?? 0;
+  return (
+    <section className={`progress-strip panel ${active.stage === "done" ? "strip-done" : ""}`}>
+      <span className="strip-title">
+        Auto-investigation {active.trace_id ? `· ${active.trace_id.slice(0, 8)}…` : ""}
+      </span>
+      <div className="strip-stages">
+        {PIPELINE_STAGES.map((s, i) => (
+          <span key={s.key} className={`strip-stage ${i <= reached ? "lit" : ""} ${i === reached && active.stage !== "done" ? "current" : ""}`}>
+            {s.icon} {s.label}
+          </span>
+        ))}
+      </div>
+      {active.stage === "failed" && <span className="strip-error">failed: {active.error}</span>}
+    </section>
+  );
+}
+
 export default function Home({ onOpen }) {
   const [stats, setStats] = useState(null);
   const [incidents, setIncidents] = useState(null);
+  const [active, setActive] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/stats").then((r) => r.json()),
-      fetch("/api/incidents").then((r) => r.json()),
-    ])
-      .then(([s, i]) => {
-        setStats(s);
-        setIncidents(i.incidents);
-      })
-      .catch((e) => setError(String(e)));
+    const loadAll = () =>
+      Promise.all([
+        fetch("/api/stats").then((r) => r.json()),
+        fetch("/api/incidents").then((r) => r.json()),
+      ])
+        .then(([s, i]) => {
+          setStats(s);
+          setIncidents(i.incidents);
+          setError(null);
+        })
+        .catch((e) => setError(String(e)));
+
+    loadAll();
+    const slow = setInterval(loadAll, 15000); // incidents appear by themselves
+    const fast = setInterval(
+      () => fetch("/api/investigations/active").then((r) => r.json()).then(setActive).catch(() => {}),
+      3000
+    );
+    return () => {
+      clearInterval(slow);
+      clearInterval(fast);
+    };
   }, []);
 
   if (error)
@@ -63,6 +104,7 @@ export default function Home({ onOpen }) {
 
   return (
     <>
+      <ProgressStrip active={active} />
       <section className="status-card panel">
         <div className="status-head">
           <span className="monitor-dot" />
@@ -124,6 +166,7 @@ export default function Home({ onOpen }) {
                     ) : (
                       <span className="badge badge-fail">OPEN</span>
                     )}
+                    {i.auto && <span className="badge badge-auto">AUTO</span>}
                   </td>
                   <td>
                     <a

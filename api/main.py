@@ -10,12 +10,14 @@ Run: uvicorn api.main:app --port 8000
 
 import json
 import os
+import subprocess
+import sys
 import time
 import urllib.request
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from investigator.investigate import find_divergence, latest_run_per_config, tool_sequence
@@ -24,8 +26,18 @@ from replay.signoz import fetch_replay_runs, fetch_trace, query
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache"
+REPO_ROOT = Path(__file__).resolve().parent.parent
 SIGNOZ_URL = "http://localhost:8080"
 SPAN_TABLE = "signoz_traces.distributed_signoz_index_v3"
+
+# Auto-investigations replay only the minimal contrast pair — one failing
+# config and the fix config — to protect free-tier quota. The full matrix
+# stays available via the CLI.
+AUTO_REPLAY_CONFIGS = ["cf-1", "cf-5"]
+
+# Live pipeline state for the UI progress strip. Single-process uvicorn,
+# so a module-level dict is enough.
+ACTIVE: dict = {"stage": "idle"}
 
 app = FastAPI(title="Agent Flight Recorder API")
 app.add_middleware(
@@ -179,6 +191,7 @@ def list_incidents():
                 "confidence": float(inv["confidence"]) if inv else None,
                 "root_cause": verdict["root_cause"] if verdict else None,
                 "root_cause_seconds": root_cause_seconds,
+                "auto": bool(verdict and verdict.get("triggered_by") == "alert"),
                 "signoz_url": f"{SIGNOZ_URL}/trace/{tid}",
             }
         )
@@ -257,6 +270,75 @@ def get_investigation(trace_id: str):
     if not path.exists():
         raise HTTPException(status_code=404, detail="no investigation cached for this trace")
     return json.loads(path.read_text())
+
+
+def _run_cli(args: list[str]) -> None:
+    """Run one of our CLIs as a subprocess so its spans carry the right
+    service.name (replay-engine / crash-investigator), not the API's."""
+    result = subprocess.run(
+        [sys.executable, "-m", *args], cwd=REPO_ROOT, capture_output=True, text=True, timeout=900
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"{args[0]} failed: {result.stderr.strip()[-400:]}")
+
+
+def auto_investigate_pipeline(trace_id: str) -> None:
+    """The closed loop: replay the minimal contrast pair, then investigate.
+    Every stage is visible to the UI via /api/investigations/active."""
+    global ACTIVE
+    try:
+        ACTIVE = {"stage": "replaying", "trace_id": trace_id, "started_at": time.time(),
+                  "triggered_by": "alert"}
+        for config in AUTO_REPLAY_CONFIGS:
+            _run_cli(["replay.engine", "--trace-id", trace_id, "--config", config])
+
+        ACTIVE = {**ACTIVE, "stage": "investigating"}
+        json_out = CACHE_DIR / f"verdict-{trace_id}.tmp.json"
+        CACHE_DIR.mkdir(exist_ok=True)
+        _run_cli(["investigator.investigate", "--trace-id", trace_id,
+                  "--triggered-by", "alert", "--json-out", str(json_out)])
+        verdict = json.loads(json_out.read_text())
+        verdict["triggered_by"] = "alert"
+        _cache_path(trace_id).write_text(json.dumps(verdict, indent=1))
+        json_out.unlink(missing_ok=True)
+
+        ACTIVE = {**ACTIVE, "stage": "done", "finished_at": time.time()}
+    except Exception as exc:
+        ACTIVE = {**ACTIVE, "stage": "failed", "error": str(exc)[-300:]}
+
+
+def latest_failing_trace() -> str | None:
+    rows = query(
+        "SELECT trace_id FROM " + SPAN_TABLE + " WHERE name = 'tool.issue_refund' "
+        "AND status_code_string = 'Error' "
+        "AND `resource_string_service$$name` = 'support-agent' "
+        "ORDER BY timestamp DESC LIMIT 1"
+    )
+    return rows[0]["trace_id"] if rows else None
+
+
+@app.post("/api/alert-hook")
+@app.post("/api/webhook/alert")
+def webhook_alert(background: BackgroundTasks, payload: dict | None = None):
+    """SigNoz alert webhook: find the most recent failing trace and
+    auto-investigate it. Idempotent: cached incidents are never re-run.
+    The channel also posts resolved notifications; those are ignored."""
+    if payload and payload.get("status") == "resolved":
+        return {"status": "ignored_resolved_notification"}
+    trace_id = latest_failing_trace()
+    if trace_id is None:
+        return {"status": "no_failing_trace_found"}
+    if _cache_path(trace_id).exists():
+        return {"status": "already_investigated", "trace_id": trace_id}
+    if ACTIVE.get("stage") in ("replaying", "investigating"):
+        return {"status": "pipeline_busy", "active": ACTIVE}
+    background.add_task(auto_investigate_pipeline, trace_id)
+    return {"status": "investigation_started", "trace_id": trace_id}
+
+
+@app.get("/api/investigations/active")
+def investigations_active():
+    return ACTIVE
 
 
 @app.post("/api/investigate/{trace_id}")

@@ -78,7 +78,8 @@ def provision_alert() -> None:
     rules = existing.get("rules") if isinstance(existing, dict) else existing
     for r in rules or []:
         if r.get("alert") == rule["alert"]:
-            print(f"alert rule already exists: '{rule['alert']}' (id {r.get('id')})")
+            request("PUT", f"/api/v1/rules/{r['id']}", rule)
+            print(f"alert rule updated in place: '{rule['alert']}' (id {r.get('id')})")
             return
     created = request("POST", "/api/v1/rules", rule)
     print(f"alert rule created: '{rule['alert']}' -> {json.dumps(created)[:200]}")

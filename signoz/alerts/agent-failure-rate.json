@@ -16,7 +16,7 @@
           "name": "A",
           "legend": "failure rate",
           "disabled": false,
-          "query": "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts, countIf(status_code_string = 'Error') / count() AS value FROM signoz_traces.distributed_signoz_index_v3 WHERE name LIKE 'tool.%' AND `resource_string_service$$name` = 'support-agent' AND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} GROUP BY ts ORDER BY ts"
+          "query": "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts, countIf(status_code_string = 'Error') / count() AS value FROM signoz_traces.distributed_signoz_index_v3 WHERE name = 'tool.issue_refund' AND `resource_string_service$$name` = 'support-agent' AND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} GROUP BY ts ORDER BY ts"
         }
       }
     },
