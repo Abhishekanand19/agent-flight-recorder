@@ -10,6 +10,7 @@ Run: uvicorn api.main:app --port 8000
 
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -275,14 +276,34 @@ def get_investigation(trace_id: str):
     return json.loads(path.read_text())
 
 
-def _run_cli(args: list[str]) -> None:
+_TRACE_RE = re.compile(r"trace_id:\s*([0-9a-f]{32})")
+
+
+def _run_cli(args: list[str]) -> str:
     """Run one of our CLIs as a subprocess so its spans carry the right
-    service.name (replay-engine / crash-investigator), not the API's."""
+    service.name (support-agent / replay-engine / crash-investigator), not
+    the API's. Returns stdout."""
     result = subprocess.run(
         [sys.executable, "-m", *args], cwd=REPO_ROOT, capture_output=True, text=True, timeout=900
     )
     if result.returncode != 0:
         raise RuntimeError(f"{args[0]} failed: {result.stderr.strip()[-400:]}")
+    return result.stdout
+
+
+def _wait_for_trace(trace_id: str, timeout: float = 45.0) -> None:
+    """Block until the trace's root span is queryable in ClickHouse — the
+    agent subprocess has exited but OTLP ingestion lags a few seconds."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            spans = fetch_trace(trace_id)
+            if any(not s["parent_span_id"] and s["attributes_string"].get("request.query") for s in spans):
+                return
+        except LookupError:
+            pass
+        time.sleep(2)
+    raise RuntimeError(f"trace {trace_id} did not appear in SigNoz within {timeout:.0f}s")
 
 
 def _investigate_to_cache(trace_id: str, triggered_by: str) -> dict:
@@ -354,13 +375,49 @@ def webhook_alert(background: BackgroundTasks, payload: dict | None = None):
         log.info("incident already investigated, skipping", extra={
             "event": "alert.already_investigated", "incident.trace_id": trace_id})
         return {"status": "already_investigated", "trace_id": trace_id}
-    if ACTIVE.get("stage") in ("replaying", "investigating"):
+    if ACTIVE.get("stage") in ("generating", "replaying", "investigating"):
         log.info("pipeline busy, skipping", extra={"event": "alert.pipeline_busy"})
         return {"status": "pipeline_busy", "active": ACTIVE}
     log.info("dispatching auto-investigation", extra={
         "event": "alert.dispatched", "incident.trace_id": trace_id})
     background.add_task(auto_investigate_pipeline, trace_id)
     return {"status": "investigation_started", "trace_id": trace_id}
+
+
+def simulate_crash_pipeline() -> None:
+    """One-click demo: generate a fresh deterministic failure, then run the
+    exact same closed loop an alert would (reuses auto_investigate_pipeline)."""
+    global ACTIVE
+    try:
+        ACTIVE = {"stage": "generating", "started_at": time.time(), "triggered_by": "alert"}
+        log.info("simulate: generating incident", extra={"event": "simulate.generating"})
+        out = _run_cli(["agent.main"])  # support-agent service, deterministic failure
+        match = _TRACE_RE.search(out)
+        if not match:
+            raise RuntimeError("agent run did not print a trace_id")
+        trace_id = match.group(1)
+        ACTIVE = {**ACTIVE, "trace_id": trace_id}
+        _wait_for_trace(trace_id)
+        log.info("simulate: incident captured", extra={
+            "event": "simulate.captured", "incident.trace_id": trace_id})
+        # Hand off to the same replay -> investigate loop the webhook uses.
+        auto_investigate_pipeline(trace_id)
+    except Exception as exc:
+        ACTIVE = {**ACTIVE, "stage": "failed", "error": str(exc)[-300:]}
+        log.error("simulate crash failed", exc_info=exc, extra={
+            "event": "simulate.failed", "error.component": "flight-recorder-api"})
+
+
+@app.post("/api/simulate-crash")
+def simulate_crash(background: BackgroundTasks):
+    """Trigger the whole incident lifecycle with one click: generate a
+    failing trace, replay counterfactuals, investigate. Non-blocking; the UI
+    follows along via /api/investigations/active."""
+    if ACTIVE.get("stage") in ("generating", "replaying", "investigating"):
+        return {"status": "pipeline_busy", "active": ACTIVE}
+    log.info("simulate crash requested", extra={"event": "simulate.requested"})
+    background.add_task(simulate_crash_pipeline)
+    return {"status": "simulation_started"}
 
 
 @app.get("/api/investigations/active")

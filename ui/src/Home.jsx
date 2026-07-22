@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 function age(seconds) {
   if (seconds == null) return "—";
@@ -25,7 +25,7 @@ function Tile({ label, value, sub }) {
 }
 
 const PIPELINE_STAGES = [
-  { key: "alert", icon: "🚨", label: "Alert received" },
+  { key: "detected", icon: "🚨", label: "Crash detected" },
   { key: "replaying", icon: "⚙", label: "Replaying counterfactuals…" },
   { key: "investigating", icon: "🔍", label: "Investigating…" },
   { key: "done", icon: "✅", label: "Root cause found" },
@@ -33,11 +33,12 @@ const PIPELINE_STAGES = [
 
 function ProgressStrip({ active }) {
   if (!active || active.stage === "idle") return null;
-  const reached = { replaying: 1, investigating: 2, done: 3, failed: 2 }[active.stage] ?? 0;
+  const reached =
+    { generating: 0, replaying: 1, investigating: 2, done: 3, failed: 2 }[active.stage] ?? 0;
   return (
     <section className={`progress-strip panel ${active.stage === "done" ? "strip-done" : ""}`}>
       <span className="strip-title">
-        Auto-investigation {active.trace_id ? `· ${active.trace_id.slice(0, 8)}…` : ""}
+        Live investigation {active.trace_id ? `· ${active.trace_id.slice(0, 8)}…` : ""}
       </span>
       <div className="strip-stages">
         {PIPELINE_STAGES.map((s, i) => (
@@ -56,9 +57,10 @@ export default function Home({ onOpen }) {
   const [incidents, setIncidents] = useState(null);
   const [active, setActive] = useState(null);
   const [error, setError] = useState(null);
+  const lastStage = useRef(null);
 
-  useEffect(() => {
-    const loadAll = () =>
+  const loadAll = useCallback(
+    () =>
       Promise.all([
         fetch("/api/stats").then((r) => r.json()),
         fetch("/api/incidents").then((r) => r.json()),
@@ -68,8 +70,11 @@ export default function Home({ onOpen }) {
           setIncidents(i.incidents);
           setError(null);
         })
-        .catch((e) => setError(String(e)));
+        .catch((e) => setError(String(e))),
+    []
+  );
 
+  useEffect(() => {
     loadAll();
     const slow = setInterval(loadAll, 15000); // incidents appear by themselves
     const fast = setInterval(
@@ -80,7 +85,27 @@ export default function Home({ onOpen }) {
       clearInterval(slow);
       clearInterval(fast);
     };
-  }, []);
+  }, [loadAll]);
+
+  // The instant the pipeline finishes, pull the new incident in — no refresh.
+  useEffect(() => {
+    const stage = active?.stage;
+    if (stage && stage !== lastStage.current) {
+      if (stage === "done" || stage === "failed") loadAll();
+      lastStage.current = stage;
+    }
+  }, [active?.stage, loadAll]);
+
+  const busy = ["generating", "replaying", "investigating"].includes(active?.stage);
+
+  const simulateCrash = () => {
+    fetch("/api/simulate-crash", { method: "POST" })
+      .then((r) => r.json())
+      .then(() =>
+        fetch("/api/investigations/active").then((r) => r.json()).then(setActive)
+      )
+      .catch((e) => setError(String(e)));
+  };
 
   if (error)
     return (
@@ -110,6 +135,9 @@ export default function Home({ onOpen }) {
           <span className="monitor-dot" />
           <span className="status-title">Flight Recorder Status</span>
           <span className="status-state">Monitoring</span>
+          <button className="simulate-btn" onClick={simulateCrash} disabled={busy}>
+            {busy ? "⚙ Running…" : "⚡ Simulate Crash"}
+          </button>
         </div>
         <div className="status-facts">
           <span><strong>{stats.traces_today}</strong> traces today</span>

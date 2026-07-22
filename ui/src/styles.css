@@ -179,6 +179,15 @@ button.investigate { background: var(--red); margin: 12px 0 0; }
 .status-head { display: flex; align-items: center; gap: 10px; }
 .status-title { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
 .status-state { color: var(--green); font-size: 13px; font-weight: 600; margin-left: auto; }
+.simulate-btn {
+  background: var(--red); margin-left: 16px; font-size: 13px; padding: 8px 16px;
+  box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.5); animation: sim-pulse 2.4s ease-in-out infinite;
+}
+.simulate-btn:disabled { animation: none; }
+@keyframes sim-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(229, 72, 77, 0); }
+}
 .monitor-dot {
   width: 10px; height: 10px; border-radius: 50%; background: var(--green);
   animation: pulse 2s ease-in-out infinite;
