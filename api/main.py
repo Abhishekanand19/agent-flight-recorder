@@ -22,6 +22,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from agent.telemetry import get_logger, init_telemetry
+from agent.tools import DECOMMISSIONED_METHODS
 from investigator.investigate import find_divergence, latest_run_per_config, tool_sequence
 from replay.engine import DEFAULT_PRICE_PER_1M, PRICE_PER_1M_TOKENS
 from replay.signoz import fetch_replay_runs, fetch_trace, query
@@ -130,6 +131,43 @@ def counterfactual_impact(original_trace_id: str, fix_trace_id: str) -> dict:
     }
 
 
+def replay_failure_reason(tool_sequence: list[dict], verdict: dict | None) -> str:
+    """One-sentence, engineer-friendly explanation of why a replay failed,
+    derived from what that replay actually did (its tool calls) and, as a
+    fallback, the investigation verdict."""
+    refunds = [s for s in tool_sequence if s["tool"] == "issue_refund"]
+
+    def method_of(step: dict) -> str | None:
+        try:
+            return json.loads(step["input"]).get("method")
+        except (json.JSONDecodeError, TypeError):
+            return None
+
+    for step in refunds:
+        method = method_of(step)
+        if method and method in DECOMMISSIONED_METHODS:
+            return f"Still using deprecated {method}, so the same failure was reproduced."
+        if step["error"]:
+            return f"The refund call failed: {step['error']}"
+
+    for step in tool_sequence:
+        order = None
+        if step["tool"] in ("check_order", "issue_refund"):
+            try:
+                raw = json.loads(step["input"]) if step["input"].startswith("{") else step["input"]
+                order = str(raw.get("order_id") if isinstance(raw, dict) else raw).strip().lstrip("#")
+            except (json.JSONDecodeError, AttributeError):
+                order = None
+        if order and order != "123":
+            return f"Acted on the wrong order ({order}) instead of the reported one."
+
+    if not refunds:
+        return "The agent never attempted the refund, so the incident was left unresolved."
+    if verdict and verdict.get("root_cause"):
+        return f"Reproduced the failure — {verdict['root_cause'][:140]}"
+    return "Reproduced the original failure without applying the structural fix."
+
+
 def investigation_status(trace_id: str) -> dict:
     """Has this incident been investigated, and at what confidence?"""
     rows = query(
@@ -171,6 +209,15 @@ def get_incident(trace_id: str):
     configs = [
         {**m, "tool_sequence": tool_sequence(replay_spans[m["trace_id"]])} for m in matrix
     ]
+
+    # Attach a one-sentence failure reason to every failed replay, generated
+    # from that replay's own tool calls (+ investigation verdict as fallback).
+    verdict_path = _cache_path(trace_id)
+    verdict = json.loads(verdict_path.read_text()) if verdict_path.exists() else None
+    seq_by_config = {c["config_id"]: c["tool_sequence"] for c in configs}
+    for m in matrix:
+        if not m["success"]:
+            m["reason"] = replay_failure_reason(seq_by_config.get(m["config_id"], []), verdict)
 
     fix = next((m for m in matrix if m["success"] and m["fix_applied"]), None)
     return {
