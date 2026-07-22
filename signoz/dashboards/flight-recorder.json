@@ -10,7 +10,8 @@
     { "i": "failure-rate", "x": 6, "y": 0, "w": 6, "h": 9, "moved": false, "static": false },
     { "i": "replay-matrix", "x": 0, "y": 9, "w": 6, "h": 9, "moved": false, "static": false },
     { "i": "investigator-confidence", "x": 6, "y": 9, "w": 6, "h": 9, "moved": false, "static": false },
-    { "i": "top-failing-tools", "x": 0, "y": 18, "w": 12, "h": 8, "moved": false, "static": false }
+    { "i": "top-failing-tools", "x": 0, "y": 18, "w": 12, "h": 8, "moved": false, "static": false },
+    { "i": "replay-cost", "x": 0, "y": 26, "w": 12, "h": 8, "moved": false, "static": false }
   ],
   "widgets": [
     {
@@ -324,6 +325,69 @@
             "legend": "",
             "disabled": false,
             "query": "SELECT attributes_string['tool.name'] AS tool, countIf(status_code_string = 'Error') AS failures, count() AS calls, round(countIf(status_code_string = 'Error') / count(), 3) AS failure_rate FROM signoz_traces.distributed_signoz_index_v3 WHERE name LIKE 'tool.%' AND attributes_string['tool.name'] != '' GROUP BY tool ORDER BY failures DESC"
+          }
+        ]
+      }
+    },
+    {
+      "id": "replay-cost",
+      "title": "Replay cost & resources (by model)",
+      "description": "tokens, execution time and estimated inference cost per replay model",
+      "panelTypes": "table",
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": { "linksData": [] },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "fillSpans": false,
+      "isLogScale": false,
+      "isStacked": false,
+      "legendPosition": "bottom",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "yAxisUnit": "none",
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "query": {
+        "id": "3f3f8b3a-0006-4a5b-9c1d-replaycostpanel",
+        "queryType": "clickhouse_sql",
+        "unit": "",
+        "promql": [{ "name": "A", "query": "", "legend": "", "disabled": false }],
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [{ "expression": "count()" }],
+              "dataSource": "traces",
+              "disabled": true,
+              "expression": "A",
+              "filter": { "expression": "" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "legend": "",
+            "disabled": false,
+            "query": "SELECT attributes_string['replay.model'] AS model, count() AS replays, sum(attributes_number['replay.tokens']) AS tokens, round(avg(attributes_number['replay.duration_ms']), 0) AS avg_exec_ms, round(sum(attributes_number['replay.cost_usd']), 6) AS est_cost_usd FROM signoz_traces.distributed_signoz_index_v3 WHERE name = 'replay_run' AND mapContains(attributes_number, 'replay.cost_usd') GROUP BY model ORDER BY est_cost_usd DESC"
           }
         ]
       }

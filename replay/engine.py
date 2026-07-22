@@ -18,10 +18,19 @@ from opentelemetry.trace import Status, StatusCode
 
 from agent import kb
 from agent.graph import build_graph
+from agent.llm import get_usage, reset_usage
 from agent.telemetry import get_logger, get_tracer, init_telemetry, shutdown_telemetry
 from agent.tools import DECOMMISSIONED_METHODS
 
 log = get_logger("replay")
+
+# Estimated inference cost — published blended $ per 1M tokens (free tier in
+# practice; this is the "what it would cost" figure engineers care about).
+PRICE_PER_1M_TOKENS = {
+    "llama-3.3-70b-versatile": 0.70,
+    "gemini-2.5-flash": 0.60,
+}
+DEFAULT_PRICE_PER_1M = 0.70
 
 # Max 4 counterfactual runs per incident (CLAUDE.md rule / free-tier limits),
 # plus cf-5: the fix-validation run. It uses the SAME model and temperature as
@@ -111,6 +120,8 @@ def run_replay(config: dict, request: str, original_trace_id: str) -> dict:
         error = None
         if fix_applied:
             kb.set_entries(kb.FIXED_ENTRIES)
+        reset_usage()  # start token/latency accounting for this replay
+        start = time.perf_counter()
         try:
             graph = build_graph(model=config["model"], temperature=config["temperature"])
             result = graph.invoke(
@@ -130,12 +141,28 @@ def run_replay(config: dict, request: str, original_trace_id: str) -> dict:
         finally:
             if fix_applied:
                 kb.set_entries(kb.ENTRIES)
+
+        # Cost & resource metrics, derived from this replay's own LLM usage and
+        # stamped on the replay_run span so every reader queries them trivially.
+        duration_ms = (time.perf_counter() - start) * 1000.0
+        usage = get_usage()
+        tokens = usage["tokens"]
+        llm_calls = usage["calls"]
+        avg_latency_ms = usage["latency_ms"] / llm_calls if llm_calls else 0.0
+        cost_usd = tokens / 1_000_000 * PRICE_PER_1M_TOKENS.get(config["model"], DEFAULT_PRICE_PER_1M)
         span.set_attribute("replay.success", success)
+        span.set_attribute("replay.tokens", tokens)
+        span.set_attribute("replay.llm_calls", llm_calls)
+        span.set_attribute("replay.duration_ms", duration_ms)
+        span.set_attribute("replay.avg_latency_ms", avg_latency_ms)
+        span.set_attribute("replay.cost_usd", cost_usd)
         log.info("replay finished", extra={
             "event": "replay.finished", "replay.config_id": config["config_id"],
             "replay.of": original_trace_id, "replay.success": success,
-            "replay.trace_id": trace_id})
-    return {**config, "success": success, "trace_id": trace_id, "error": error}
+            "replay.trace_id": trace_id, "replay.tokens": tokens,
+            "replay.duration_ms": round(duration_ms, 1), "replay.cost_usd": cost_usd})
+    return {**config, "success": success, "trace_id": trace_id, "error": error,
+            "tokens": tokens, "cost_usd": cost_usd, "duration_ms": duration_ms}
 
 
 def main() -> None:
@@ -176,13 +203,18 @@ def main() -> None:
             time.sleep(SECONDS_BEFORE_GEMINI if next_is_gemini else SECONDS_BETWEEN_RUNS)
 
     print()
-    print(f"{'config':<7} {'model':<24} {'temp':<5} {'fix':<5} {'result':<7} replay trace_id")
+    print(f"{'config':<7} {'model':<24} {'temp':<5} {'fix':<5} {'result':<7} {'tokens':<7} {'cost$':<9} replay trace_id")
     for r in results:
         verdict = "ERROR" if r["error"] else ("PASS" if r["success"] else "FAIL")
         fix = "yes" if r.get("fix_applied") else "no"
-        print(f"{r['config_id']:<7} {r['model']:<24} {r['temperature']:<5} {fix:<5} {verdict:<7} {r['trace_id']}")
+        print(f"{r['config_id']:<7} {r['model']:<24} {r['temperature']:<5} {fix:<5} {verdict:<7} "
+              f"{r.get('tokens', 0):<7} {r.get('cost_usd', 0):<9.6f} {r['trace_id']}")
         if r["error"]:
             print(f"        error: {r['error']}")
+
+    total_tokens = sum(r.get("tokens", 0) for r in results)
+    total_cost = sum(r.get("cost_usd", 0) for r in results)
+    print(f"\ntotals: {total_tokens} tokens, ${total_cost:.6f} estimated inference cost")
 
     shutdown_telemetry()
 

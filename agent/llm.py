@@ -10,6 +10,7 @@ Reliability notes (llama-3.3 on Groq, worse at temperature 0.8):
   up to MAX_ATTEMPTS times.
 """
 
+import contextvars
 import json
 import os
 import re
@@ -23,6 +24,27 @@ from langchain_groq import ChatGroq
 from agent.telemetry import get_logger, get_tracer
 
 log = get_logger("llm")
+
+# Per-run token/latency accounting. A caller (e.g. the replay engine) opts in
+# with reset_usage() and reads get_usage() afterwards; when unset, invoke_llm's
+# accounting is a no-op, so the agent and investigator paths are unaffected.
+_usage: contextvars.ContextVar[dict | None] = contextvars.ContextVar("llm_usage", default=None)
+
+
+def reset_usage() -> None:
+    _usage.set({"tokens": 0, "calls": 0, "latency_ms": 0.0})
+
+
+def get_usage() -> dict:
+    return _usage.get() or {"tokens": 0, "calls": 0, "latency_ms": 0.0}
+
+
+def _account(tokens: int, latency_ms: float) -> None:
+    u = _usage.get()
+    if u is not None:
+        u["tokens"] += tokens
+        u["calls"] += 1
+        u["latency_ms"] += latency_ms
 
 MODEL = "llama-3.3-70b-versatile"
 TEMPERATURE = 0.8
@@ -77,9 +99,12 @@ def invoke_llm(llm, messages, model: str = MODEL, temperature: float = TEMPERATU
         log.info("llm request", extra={
             "event": "llm.request", "llm.model": model, "llm.temperature": temperature})
         response = None
+        elapsed_ms = 0.0
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
+                start = time.perf_counter()
                 response = llm.invoke(messages)
+                elapsed_ms = (time.perf_counter() - start) * 1000.0
                 break
             except BadRequestError as exc:
                 if "tool_use_failed" not in str(exc):
@@ -108,6 +133,9 @@ def invoke_llm(llm, messages, model: str = MODEL, temperature: float = TEMPERATU
         usage = response.usage_metadata or {}
         tokens = usage.get("total_tokens", 0)
         span.set_attribute("llm.tokens", tokens)
+        span.set_attribute("llm.latency_ms", elapsed_ms)
+        _account(tokens, elapsed_ms)
         log.info("llm response", extra={
-            "event": "llm.response", "llm.model": model, "llm.tokens": tokens})
+            "event": "llm.response", "llm.model": model,
+            "llm.tokens": tokens, "llm.latency_ms": round(elapsed_ms, 1)})
         return response

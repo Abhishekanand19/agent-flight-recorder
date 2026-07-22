@@ -24,6 +24,62 @@ function Tile({ label, value, sub }) {
   );
 }
 
+function ReplayCost({ cost }) {
+  if (!cost) return null;
+  const money = (v) => `$${(v || 0).toFixed(v < 0.01 ? 6 : 4)}`;
+  const ms = (v) => (v == null ? "—" : v >= 1000 ? `${(v / 1000).toFixed(1)} s` : `${Math.round(v)} ms`);
+  return (
+    <section className="panel replay-cost" style={{ marginTop: 16 }}>
+      <h2>Replay cost &amp; resources</h2>
+      {cost.replay_count === 0 ? (
+        <div className="empty-state">
+          <p className="empty-title">No replay cost data yet</p>
+          <p className="empty-hint">Run a replay (or click Simulate Crash) to populate cost metrics.</p>
+        </div>
+      ) : (
+        <>
+          <div className="cost-cells">
+            <div className="cost-cell">
+              <div className="cost-value">{money(cost.total_cost_usd)}</div>
+              <div className="cost-label">total est. cost · {cost.replay_count} replays</div>
+            </div>
+            <div className="cost-cell">
+              <div className="cost-value">{Math.round(cost.avg_tokens).toLocaleString()}</div>
+              <div className="cost-label">avg tokens / replay</div>
+            </div>
+            <div className="cost-cell">
+              <div className="cost-value">{ms(cost.avg_duration_ms)}</div>
+              <div className="cost-label">avg execution time</div>
+            </div>
+            <div className="cost-cell">
+              <div className="cost-value">{ms(cost.avg_latency_ms)}</div>
+              <div className="cost-label">avg LLM latency</div>
+            </div>
+          </div>
+          {cost.by_model.length > 0 && (
+            <table className="cost-table">
+              <thead>
+                <tr><th>model</th><th>replays</th><th>tokens</th><th>avg exec</th><th>est. cost</th></tr>
+              </thead>
+              <tbody>
+                {cost.by_model.map((m) => (
+                  <tr key={m.model}>
+                    <td className="mono">{m.model}</td>
+                    <td>{m.replays}</td>
+                    <td>{m.tokens.toLocaleString()}</td>
+                    <td>{ms(m.avg_duration_ms)}</td>
+                    <td>{money(m.cost_usd)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 function FailingTools({ tools }) {
   const withFailures = (tools || []).filter((t) => t.failures > 0);
   const maxShare = Math.max(...withFailures.map((t) => t.share), 1e-9);
@@ -87,6 +143,7 @@ export default function Home({ onOpen }) {
   const [stats, setStats] = useState(null);
   const [incidents, setIncidents] = useState(null);
   const [tools, setTools] = useState(null);
+  const [cost, setCost] = useState(null);
   const [active, setActive] = useState(null);
   const [error, setError] = useState(null);
   const lastStage = useRef(null);
@@ -97,11 +154,13 @@ export default function Home({ onOpen }) {
         fetch("/api/stats").then((r) => r.json()),
         fetch("/api/incidents").then((r) => r.json()),
         fetch("/api/failing-tools").then((r) => r.json()),
+        fetch("/api/replay-cost").then((r) => r.json()),
       ])
-        .then(([s, i, t]) => {
+        .then(([s, i, t, c]) => {
           setStats(s);
           setIncidents(i.incidents);
           setTools(t.tools);
+          setCost(c);
           setError(null);
         })
         .catch((e) => setError(String(e))),
@@ -193,6 +252,8 @@ export default function Home({ onOpen }) {
         <Tile label="Avg investigation confidence" value={stats.avg_confidence == null ? "—" : `${Math.round(stats.avg_confidence)}%`} />
         <Tile label="Avg Root Cause Time" value={duration(stats.avg_root_cause_s)} sub="(MTTRC)" />
       </section>
+
+      <ReplayCost cost={cost} />
 
       <FailingTools tools={tools} />
 

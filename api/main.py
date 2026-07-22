@@ -264,6 +264,48 @@ def get_stats():
     }
 
 
+@app.get("/api/replay-cost")
+def replay_cost():
+    """Cost & resource analysis over replay_run spans (metrics stamped at
+    replay time). Aggregate totals plus a per-model breakdown."""
+    filt = ("WHERE name = 'replay_run' AND mapContains(attributes_number, 'replay.cost_usd')")
+    agg = query(
+        "SELECT count() AS replays, "
+        "sum(attributes_number['replay.tokens']) AS tokens, "
+        "sum(attributes_number['replay.cost_usd']) AS cost, "
+        "avg(attributes_number['replay.duration_ms']) AS avg_duration_ms, "
+        "avg(attributes_number['replay.avg_latency_ms']) AS avg_latency_ms "
+        "FROM " + SPAN_TABLE + " " + filt
+    )[0]
+    by_model = query(
+        "SELECT attributes_string['replay.model'] AS model, count() AS replays, "
+        "sum(attributes_number['replay.tokens']) AS tokens, "
+        "sum(attributes_number['replay.cost_usd']) AS cost, "
+        "avg(attributes_number['replay.duration_ms']) AS avg_duration_ms "
+        "FROM " + SPAN_TABLE + " " + filt + " GROUP BY model ORDER BY cost DESC"
+    )
+    replays = int(agg["replays"])
+    total_tokens = int(float(agg["tokens"])) if agg["tokens"] else 0
+    return {
+        "replay_count": replays,
+        "total_tokens": total_tokens,
+        "total_cost_usd": float(agg["cost"]) if agg["cost"] else 0.0,
+        "avg_tokens": total_tokens / replays if replays else 0,
+        "avg_duration_ms": float(agg["avg_duration_ms"]) if agg["avg_duration_ms"] else 0.0,
+        "avg_latency_ms": float(agg["avg_latency_ms"]) if agg["avg_latency_ms"] else 0.0,
+        "by_model": [
+            {
+                "model": m["model"],
+                "replays": int(m["replays"]),
+                "tokens": int(float(m["tokens"])) if m["tokens"] else 0,
+                "cost_usd": float(m["cost"]) if m["cost"] else 0.0,
+                "avg_duration_ms": float(m["avg_duration_ms"]) if m["avg_duration_ms"] else 0.0,
+            }
+            for m in by_model
+        ],
+    }
+
+
 @app.get("/api/failing-tools")
 def failing_tools():
     """Which agent tools fail most, from the tool.* spans already in SigNoz.
