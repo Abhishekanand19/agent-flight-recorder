@@ -20,10 +20,13 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from agent.telemetry import get_logger, init_telemetry
 from investigator.investigate import find_divergence, latest_run_per_config, tool_sequence
 from replay.signoz import fetch_replay_runs, fetch_trace, query
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+init_telemetry(service_name="flight-recorder-api")
+log = get_logger("api")
 
 CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache"
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -282,6 +285,20 @@ def _run_cli(args: list[str]) -> None:
         raise RuntimeError(f"{args[0]} failed: {result.stderr.strip()[-400:]}")
 
 
+def _investigate_to_cache(trace_id: str, triggered_by: str) -> dict:
+    """Run the investigator CLI (own service.name=crash-investigator) and
+    cache its verdict tagged with what triggered it."""
+    json_out = CACHE_DIR / f"verdict-{trace_id}.tmp.json"
+    CACHE_DIR.mkdir(exist_ok=True)
+    _run_cli(["investigator.investigate", "--trace-id", trace_id,
+              "--triggered-by", triggered_by, "--json-out", str(json_out)])
+    verdict = json.loads(json_out.read_text())
+    verdict["triggered_by"] = triggered_by
+    _cache_path(trace_id).write_text(json.dumps(verdict, indent=1))
+    json_out.unlink(missing_ok=True)
+    return verdict
+
+
 def auto_investigate_pipeline(trace_id: str) -> None:
     """The closed loop: replay the minimal contrast pair, then investigate.
     Every stage is visible to the UI via /api/investigations/active."""
@@ -289,22 +306,25 @@ def auto_investigate_pipeline(trace_id: str) -> None:
     try:
         ACTIVE = {"stage": "replaying", "trace_id": trace_id, "started_at": time.time(),
                   "triggered_by": "alert"}
+        log.info("auto-investigation replaying", extra={
+            "event": "pipeline.replaying", "incident.trace_id": trace_id})
         for config in AUTO_REPLAY_CONFIGS:
             _run_cli(["replay.engine", "--trace-id", trace_id, "--config", config])
 
         ACTIVE = {**ACTIVE, "stage": "investigating"}
-        json_out = CACHE_DIR / f"verdict-{trace_id}.tmp.json"
-        CACHE_DIR.mkdir(exist_ok=True)
-        _run_cli(["investigator.investigate", "--trace-id", trace_id,
-                  "--triggered-by", "alert", "--json-out", str(json_out)])
-        verdict = json.loads(json_out.read_text())
-        verdict["triggered_by"] = "alert"
-        _cache_path(trace_id).write_text(json.dumps(verdict, indent=1))
-        json_out.unlink(missing_ok=True)
+        log.info("auto-investigation investigating", extra={
+            "event": "pipeline.investigating", "incident.trace_id": trace_id})
+        verdict = _investigate_to_cache(trace_id, "alert")
 
         ACTIVE = {**ACTIVE, "stage": "done", "finished_at": time.time()}
+        log.info("auto-investigation complete", extra={
+            "event": "pipeline.done", "incident.trace_id": trace_id,
+            "investigation.confidence": verdict.get("confidence_pct")})
     except Exception as exc:
         ACTIVE = {**ACTIVE, "stage": "failed", "error": str(exc)[-300:]}
+        log.error("auto-investigation failed", exc_info=exc, extra={
+            "event": "pipeline.failed", "incident.trace_id": trace_id,
+            "error.component": "flight-recorder-api"})
 
 
 def latest_failing_trace() -> str | None:
@@ -323,15 +343,22 @@ def webhook_alert(background: BackgroundTasks, payload: dict | None = None):
     """SigNoz alert webhook: find the most recent failing trace and
     auto-investigate it. Idempotent: cached incidents are never re-run.
     The channel also posts resolved notifications; those are ignored."""
+    log.info("alert webhook received", extra={"event": "alert.received"})
     if payload and payload.get("status") == "resolved":
         return {"status": "ignored_resolved_notification"}
     trace_id = latest_failing_trace()
     if trace_id is None:
+        log.warning("alert fired but no failing trace found", extra={"event": "alert.no_trace"})
         return {"status": "no_failing_trace_found"}
     if _cache_path(trace_id).exists():
+        log.info("incident already investigated, skipping", extra={
+            "event": "alert.already_investigated", "incident.trace_id": trace_id})
         return {"status": "already_investigated", "trace_id": trace_id}
     if ACTIVE.get("stage") in ("replaying", "investigating"):
+        log.info("pipeline busy, skipping", extra={"event": "alert.pipeline_busy"})
         return {"status": "pipeline_busy", "active": ACTIVE}
+    log.info("dispatching auto-investigation", extra={
+        "event": "alert.dispatched", "incident.trace_id": trace_id})
     background.add_task(auto_investigate_pipeline, trace_id)
     return {"status": "investigation_started", "trace_id": trace_id}
 
@@ -346,16 +373,14 @@ def post_investigate(trace_id: str):
     path = _cache_path(trace_id)
     if path.exists():  # never burn Gemini quota twice for the same trace
         return json.loads(path.read_text())
-
-    load_dotenv()
-    from agent.telemetry import init_telemetry
-    from investigator.investigate import investigate
-
-    init_telemetry(service_name="crash-investigator")
+    log.info("manual investigation requested", extra={
+        "event": "investigate.manual", "incident.trace_id": trace_id})
     try:
-        verdict = investigate(trace_id)
-    except LookupError as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
-    CACHE_DIR.mkdir(exist_ok=True)
-    path.write_text(json.dumps(verdict, indent=1))
-    return verdict
+        # Runs as a subprocess so the investigation keeps service.name=
+        # crash-investigator, exactly like the alert-triggered path.
+        return _investigate_to_cache(trace_id, "manual")
+    except RuntimeError as exc:
+        log.error("manual investigation failed", exc_info=exc, extra={
+            "event": "investigate.error", "incident.trace_id": trace_id,
+            "error.component": "flight-recorder-api"})
+        raise HTTPException(status_code=502, detail=str(exc))

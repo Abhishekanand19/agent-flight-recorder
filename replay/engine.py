@@ -18,8 +18,10 @@ from opentelemetry.trace import Status, StatusCode
 
 from agent import kb
 from agent.graph import build_graph
-from agent.telemetry import get_tracer, init_telemetry, shutdown_telemetry
+from agent.telemetry import get_logger, get_tracer, init_telemetry, shutdown_telemetry
 from agent.tools import DECOMMISSIONED_METHODS
+
+log = get_logger("replay")
 
 # Max 4 counterfactual runs per incident (CLAUDE.md rule / free-tier limits),
 # plus cf-5: the fix-validation run. It uses the SAME model and temperature as
@@ -101,6 +103,10 @@ def run_replay(config: dict, request: str, original_trace_id: str) -> dict:
         span.set_attribute("replay.model", config["model"])
         span.set_attribute("replay.temperature", config["temperature"])
         span.set_attribute("replay.fix_applied", fix_applied)
+        log.info("replay started", extra={
+            "event": "replay.started", "replay.of": original_trace_id,
+            "replay.config_id": config["config_id"], "replay.model": config["model"],
+            "replay.temperature": config["temperature"], "replay.fix_applied": fix_applied})
         success = False
         error = None
         if fix_applied:
@@ -118,10 +124,17 @@ def run_replay(config: dict, request: str, original_trace_id: str) -> dict:
             error = f"{type(exc).__name__}: {exc}"
             span.record_exception(exc)
             span.set_status(Status(StatusCode.ERROR, str(exc)))
+            log.error("replay errored", exc_info=exc, extra={
+                "event": "replay.error", "replay.config_id": config["config_id"],
+                "replay.of": original_trace_id, "error.component": "replay"})
         finally:
             if fix_applied:
                 kb.set_entries(kb.ENTRIES)
         span.set_attribute("replay.success", success)
+        log.info("replay finished", extra={
+            "event": "replay.finished", "replay.config_id": config["config_id"],
+            "replay.of": original_trace_id, "replay.success": success,
+            "replay.trace_id": trace_id})
     return {**config, "success": success, "trace_id": trace_id, "error": error}
 
 

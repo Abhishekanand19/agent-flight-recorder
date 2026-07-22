@@ -9,7 +9,9 @@ from langchain_core.messages import HumanMessage
 from langgraph.errors import GraphRecursionError
 
 from agent.graph import build_graph
-from agent.telemetry import get_tracer, init_telemetry, shutdown_telemetry
+from agent.telemetry import get_logger, get_tracer, init_telemetry, shutdown_telemetry
+
+log = get_logger("agent")
 
 DEMO_QUERY = "Please refund order #123."
 
@@ -20,14 +22,18 @@ def run_request(query: str) -> tuple[str, str]:
     with get_tracer().start_as_current_span("support_request") as span:
         span.set_attribute("request.query", query)
         trace_id = format(span.get_span_context().trace_id, "032x")
+        log.info("support request received", extra={
+            "event": "request.received", "request.query": query})
         try:
             result = graph.invoke(
                 {"messages": [HumanMessage(query)]},
                 config={"recursion_limit": 12},
             )
             answer = result["messages"][-1].content
+            log.info("support request completed", extra={"event": "request.completed"})
         except GraphRecursionError:
             answer = "Agent gave up: recursion limit reached without a final answer."
+            log.warning("agent hit recursion limit", extra={"event": "request.recursion_limit"})
     return trace_id, answer
 
 

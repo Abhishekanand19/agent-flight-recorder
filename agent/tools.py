@@ -11,7 +11,9 @@ from langchain_core.tools import tool
 from opentelemetry.trace import Status, StatusCode
 
 from agent import kb
-from agent.telemetry import get_tracer
+from agent.telemetry import get_logger, get_tracer
+
+log = get_logger("agent")
 
 ORDERS = {
     "123": {"order_id": "123", "status": "delivered", "item": "Mechanical keyboard", "total_usd": 89.00},
@@ -59,6 +61,8 @@ def search_kb(query: str) -> str:
     with get_tracer().start_as_current_span("tool.search_kb") as span:
         span.set_attribute("tool.name", "search_kb")
         span.set_attribute("tool.input", query)
+        log.info("knowledge base searched", extra={
+            "event": "tool.invoked", "tool.name": "search_kb", "tool.input": query})
         return do_search_kb(query)
 
 
@@ -68,6 +72,8 @@ def check_order(order_id: str) -> str:
     with get_tracer().start_as_current_span("tool.check_order") as span:
         span.set_attribute("tool.name", "check_order")
         span.set_attribute("tool.input", order_id)
+        log.info("order looked up", extra={
+            "event": "tool.invoked", "tool.name": "check_order", "tool.input": order_id})
         return do_check_order(order_id)
 
 
@@ -78,9 +84,18 @@ def issue_refund(order_id: str, method: str) -> str:
     with get_tracer().start_as_current_span("tool.issue_refund") as span:
         span.set_attribute("tool.name", "issue_refund")
         span.set_attribute("tool.input", json.dumps({"order_id": order_id, "method": method}))
+        log.info("refund requested", extra={
+            "event": "tool.invoked", "tool.name": "issue_refund",
+            "order.id": order_id, "refund.method": method})
         try:
-            return do_issue_refund(order_id, method)
+            result = do_issue_refund(order_id, method)
+            log.info("refund issued", extra={
+                "event": "tool.succeeded", "tool.name": "issue_refund", "order.id": order_id})
+            return result
         except ValueError as exc:
             span.record_exception(exc)
             span.set_status(Status(StatusCode.ERROR, str(exc)))
+            log.error("refund failed", exc_info=exc, extra={
+                "event": "tool.error", "tool.name": "issue_refund",
+                "order.id": order_id, "refund.method": method, "error.component": "agent"})
             return f"ERROR: refund failed: {exc}"

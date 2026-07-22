@@ -20,7 +20,9 @@ from groq import BadRequestError
 from langchain_core.messages import AIMessage
 from langchain_groq import ChatGroq
 
-from agent.telemetry import get_tracer
+from agent.telemetry import get_logger, get_tracer
+
+log = get_logger("llm")
 
 MODEL = "llama-3.3-70b-versatile"
 TEMPERATURE = 0.8
@@ -72,6 +74,8 @@ def invoke_llm(llm, messages, model: str = MODEL, temperature: float = TEMPERATU
     with get_tracer().start_as_current_span("llm.chat") as span:
         span.set_attribute("llm.model", model)
         span.set_attribute("llm.temperature", temperature)
+        log.info("llm request", extra={
+            "event": "llm.request", "llm.model": model, "llm.temperature": temperature})
         response = None
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
@@ -84,16 +88,26 @@ def invoke_llm(llm, messages, model: str = MODEL, temperature: float = TEMPERATU
                 if recovered is not None:
                     span.add_event("recovered_tool_call_from_failed_generation", {"attempt": attempt})
                     span.set_attribute("llm.tokens", 0)
+                    log.warning("recovered malformed tool call from failed_generation", extra={
+                        "event": "llm.tool_use_recovered", "llm.model": model, "llm.attempt": attempt})
                     return recovered
                 if attempt == MAX_ATTEMPTS:
                     raise
                 span.add_event("groq_tool_use_failed_retry", {"attempt": attempt})
+                log.warning("tool_use_failed, re-rolling", extra={
+                    "event": "llm.tool_use_failed", "llm.model": model, "llm.attempt": attempt})
             except Exception as exc:
                 delay = _rate_limit_delay(exc)
                 if delay is None or attempt == MAX_ATTEMPTS:
                     raise
                 span.add_event("rate_limited_waiting", {"attempt": attempt, "delay_s": delay})
+                log.warning("rate limited, backing off", extra={
+                    "event": "llm.rate_limited", "llm.model": model,
+                    "llm.attempt": attempt, "llm.retry_delay_s": delay})
                 time.sleep(delay)
         usage = response.usage_metadata or {}
-        span.set_attribute("llm.tokens", usage.get("total_tokens", 0))
+        tokens = usage.get("total_tokens", 0)
+        span.set_attribute("llm.tokens", tokens)
+        log.info("llm response", extra={
+            "event": "llm.response", "llm.model": model, "llm.tokens": tokens})
         return response

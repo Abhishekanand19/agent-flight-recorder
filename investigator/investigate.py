@@ -20,7 +20,9 @@ from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
 
 from agent.llm import invoke_llm
-from agent.telemetry import get_tracer, init_telemetry, shutdown_telemetry
+from agent.telemetry import get_logger, get_tracer, init_telemetry, shutdown_telemetry
+
+log = get_logger("investigator")
 
 INVESTIGATOR_MODEL = "gemini-2.5-flash"
 INVESTIGATOR_TEMPERATURE = 0.0
@@ -184,12 +186,18 @@ def investigate(original_trace_id: str, triggered_by: str = "manual") -> dict:
         investigation_trace_id = format(span.get_span_context().trace_id, "032x")
         span.set_attribute("investigation.of", original_trace_id)
         span.set_attribute("investigation.triggered_by", triggered_by)
+        log.info("investigation started", extra={
+            "event": "investigation.started", "investigation.of": original_trace_id,
+            "investigation.triggered_by": triggered_by})
 
         with tracer.start_as_current_span("fetch.traces") as fetch_span:
             original_spans = fetch_trace(original_trace_id)
             replay_runs = fetch_replay_runs(original_trace_id)
             replay_spans = {run["trace_id"]: fetch_trace(run["trace_id"]) for run in replay_runs}
             fetch_span.set_attribute("fetch.replay_count", len(replay_runs))
+            log.info("evidence gathered", extra={
+                "event": "investigation.evidence", "investigation.of": original_trace_id,
+                "fetch.replay_count": len(replay_runs)})
 
         diff = build_diff(original_spans, replay_runs, replay_spans)
 
@@ -210,6 +218,13 @@ def investigate(original_trace_id: str, triggered_by: str = "manual") -> dict:
         )
         verdict = parse_verdict(response.content if isinstance(response.content, str) else str(response.content))
         span.set_attribute("investigation.confidence", verdict["confidence_pct"])
+        if verdict["confidence_pct"] == 0 and verdict["root_cause"] == FALLBACK_VERDICT["root_cause"]:
+            log.warning("verdict unparseable, used fallback", extra={
+                "event": "investigation.parse_fallback", "investigation.of": original_trace_id})
+        log.info("investigation completed", extra={
+            "event": "investigation.completed", "investigation.of": original_trace_id,
+            "investigation.confidence": verdict["confidence_pct"],
+            "investigation.root_cause": verdict["root_cause"][:160]})
 
     print(f"investigation trace: {investigation_trace_id}")
     print_verdict_card(verdict, diff)
