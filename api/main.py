@@ -23,6 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from agent.telemetry import get_logger, init_telemetry
 from investigator.investigate import find_divergence, latest_run_per_config, tool_sequence
+from replay.engine import DEFAULT_PRICE_PER_1M, PRICE_PER_1M_TOKENS
 from replay.signoz import fetch_replay_runs, fetch_trace, query
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -73,6 +74,60 @@ def waterfall_spans(spans: list[dict]) -> list[dict]:
             }
         )
     return out
+
+
+def trace_metrics(trace_id: str) -> dict:
+    """Cost/resource metrics for any single trace, derived uniformly from its
+    own spans — works for the original incident and for replay traces alike."""
+    row = query(
+        "SELECT sumIf(attributes_number['llm.tokens'], name = 'llm.chat') AS tokens, "
+        "countIf(name = 'llm.chat') AS llm_calls, "
+        "avgIf(duration_nano, name = 'llm.chat') / 1e6 AS avg_latency_ms, "
+        # execution time = total LLM inference time (the work the fix reduces),
+        # not wall-clock, which includes rate-limit sleeps and replay overhead.
+        "sumIf(duration_nano, name = 'llm.chat') / 1e6 AS exec_ms, "
+        "anyIf(attributes_string['llm.model'], name = 'llm.chat' "
+        "AND attributes_string['llm.model'] != '') AS model "
+        "FROM " + SPAN_TABLE + f" WHERE trace_id = '{trace_id}'"
+    )[0]
+    tokens = int(float(row["tokens"])) if row["tokens"] else 0
+    model = row["model"] or ""
+    price = PRICE_PER_1M_TOKENS.get(model, DEFAULT_PRICE_PER_1M)
+    return {
+        "tokens": tokens,
+        "llm_calls": int(row["llm_calls"]),
+        "avg_latency_ms": float(row["avg_latency_ms"]) if row["avg_latency_ms"] else 0.0,
+        "exec_ms": float(row["exec_ms"]) if row["exec_ms"] else 0.0,
+        "model": model,
+        "cost_usd": tokens / 1_000_000 * price,
+    }
+
+
+def counterfactual_impact(original_trace_id: str, fix_trace_id: str) -> dict:
+    """Measurable improvement of the validated fix over the original failure.
+    Deltas are fix - original, so negatives are savings."""
+    original = trace_metrics(original_trace_id)
+    fix = trace_metrics(fix_trace_id)
+
+    def pct(o: float, f: float) -> float | None:
+        return round((f - o) / o * 100, 1) if o else None
+
+    return {
+        "original": original,
+        "fix": fix,
+        "deltas": {
+            "tokens": fix["tokens"] - original["tokens"],
+            "avg_latency_ms": fix["avg_latency_ms"] - original["avg_latency_ms"],
+            "exec_ms": fix["exec_ms"] - original["exec_ms"],
+            "cost_usd": fix["cost_usd"] - original["cost_usd"],
+        },
+        "pct": {
+            "tokens": pct(original["tokens"], fix["tokens"]),
+            "avg_latency_ms": pct(original["avg_latency_ms"], fix["avg_latency_ms"]),
+            "exec_ms": pct(original["exec_ms"], fix["exec_ms"]),
+            "cost_usd": pct(original["cost_usd"], fix["cost_usd"]),
+        },
+    }
 
 
 def investigation_status(trace_id: str) -> dict:
@@ -129,6 +184,7 @@ def get_incident(trace_id: str):
         "matrix": matrix,
         "divergence": find_divergence(configs),
         "investigation": investigation_status(trace_id),
+        "impact": counterfactual_impact(trace_id, fix["trace_id"]) if fix else None,
     }
 
 

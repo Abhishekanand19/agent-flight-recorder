@@ -4,6 +4,7 @@ import Timeline from "./Timeline.jsx";
 import Waterfall from "./Waterfall.jsx";
 import Matrix from "./Matrix.jsx";
 import VerdictCard from "./VerdictCard.jsx";
+import DeltaImpact from "./DeltaImpact.jsx";
 
 export default function App() {
   const [traceId, setTraceId] = useState(null); // null = Operations Center
@@ -115,6 +116,8 @@ export default function App() {
                   </div>
                 )}
               </section>
+
+              <DeltaImpact impact={incident.impact} />
 
               <section className="bottom">
                 <Matrix matrix={incident.matrix} />

@@ -210,6 +210,25 @@ button.investigate { background: var(--red); margin: 12px 0 0; }
 .tile-label { color: var(--muted); font-size: 11.5px; margin-top: 3px; }
 .tile-sub { color: var(--muted); font-size: 10.5px; margin-top: 2px; opacity: 0.75; }
 
+/* ---------- delta impact ---------- */
+.delta-impact { margin-top: 16px; border-top: 3px solid var(--green); }
+.delta-cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.delta-cell {
+  background: var(--panel-raised); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px; text-align: center;
+  animation: fade-up 0.35s ease both;
+}
+.delta-cell.good { border-color: rgba(70, 167, 88, 0.5); }
+.delta-cell.bad { border-color: rgba(229, 72, 77, 0.5); }
+.delta-value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.delta-cell.good .delta-value { color: var(--green); }
+.delta-cell.bad .delta-value { color: var(--red); }
+.delta-cell.flat .delta-value { color: var(--muted); }
+.delta-label { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.delta-pct { font-size: 11px; margin-top: 4px; font-family: var(--font-mono); opacity: 0.8; }
+.delta-cell.good .delta-pct { color: var(--green); }
+.delta-cell.bad .delta-pct { color: var(--red); }
+
 /* ---------- replay cost & resources ---------- */
 .cost-cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .cost-cell {
