@@ -24,6 +24,37 @@ function Tile({ label, value, sub }) {
   );
 }
 
+function FailingTools({ tools }) {
+  const withFailures = (tools || []).filter((t) => t.failures > 0);
+  const maxShare = Math.max(...withFailures.map((t) => t.share), 1e-9);
+  return (
+    <section className="panel" style={{ marginTop: 16 }}>
+      <h2>Top failing tools</h2>
+      {withFailures.length === 0 ? (
+        <div className="empty-state">
+          <p className="empty-title">No tool failures recorded</p>
+          <p className="empty-hint">Tool failures appear here the moment an incident occurs.</p>
+        </div>
+      ) : (
+        <div className="tool-bars">
+          {withFailures.map((t) => (
+            <div className="tool-row" key={t.tool}>
+              <span className="tool-name mono">{t.tool}</span>
+              <span className="tool-track">
+                <span className="tool-bar" style={{ width: `${(t.share / maxShare) * 100}%` }} />
+              </span>
+              <span className="tool-metric">
+                <strong>{t.failures}</strong> fail
+                <span className="tool-rate">{Math.round(t.failure_rate * 100)}% of {t.calls} calls</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 const PIPELINE_STAGES = [
   { key: "detected", icon: "🚨", label: "Crash detected" },
   { key: "replaying", icon: "⚙", label: "Replaying counterfactuals…" },
@@ -55,6 +86,7 @@ function ProgressStrip({ active }) {
 export default function Home({ onOpen }) {
   const [stats, setStats] = useState(null);
   const [incidents, setIncidents] = useState(null);
+  const [tools, setTools] = useState(null);
   const [active, setActive] = useState(null);
   const [error, setError] = useState(null);
   const lastStage = useRef(null);
@@ -64,10 +96,12 @@ export default function Home({ onOpen }) {
       Promise.all([
         fetch("/api/stats").then((r) => r.json()),
         fetch("/api/incidents").then((r) => r.json()),
+        fetch("/api/failing-tools").then((r) => r.json()),
       ])
-        .then(([s, i]) => {
+        .then(([s, i, t]) => {
           setStats(s);
           setIncidents(i.incidents);
+          setTools(t.tools);
           setError(null);
         })
         .catch((e) => setError(String(e))),
@@ -159,6 +193,8 @@ export default function Home({ onOpen }) {
         <Tile label="Avg investigation confidence" value={stats.avg_confidence == null ? "—" : `${Math.round(stats.avg_confidence)}%`} />
         <Tile label="Avg Root Cause Time" value={duration(stats.avg_root_cause_s)} sub="(MTTRC)" />
       </section>
+
+      <FailingTools tools={tools} />
 
       <section className="panel" style={{ marginTop: 16 }}>
         <h2>Incidents</h2>

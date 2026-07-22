@@ -264,6 +264,32 @@ def get_stats():
     }
 
 
+@app.get("/api/failing-tools")
+def failing_tools():
+    """Which agent tools fail most, from the tool.* spans already in SigNoz.
+    Returns per-tool failure count, call count, failure rate, and each tool's
+    share of all failures — ranked most-failing first."""
+    rows = query(
+        "SELECT attributes_string['tool.name'] AS tool, "
+        "countIf(status_code_string = 'Error') AS failures, count() AS calls "
+        "FROM " + SPAN_TABLE + " WHERE name LIKE 'tool.%' "
+        "AND attributes_string['tool.name'] != '' "
+        "GROUP BY tool ORDER BY failures DESC, calls DESC"
+    )
+    total_failures = sum(int(r["failures"]) for r in rows)
+    tools = [
+        {
+            "tool": r["tool"],
+            "failures": int(r["failures"]),
+            "calls": int(r["calls"]),
+            "failure_rate": int(r["failures"]) / int(r["calls"]) if int(r["calls"]) else 0.0,
+            "share": int(r["failures"]) / total_failures if total_failures else 0.0,
+        }
+        for r in rows
+    ]
+    return {"tools": tools, "total_failures": total_failures}
+
+
 def _cache_path(trace_id: str) -> Path:
     return CACHE_DIR / f"verdict-{trace_id}.json"
 

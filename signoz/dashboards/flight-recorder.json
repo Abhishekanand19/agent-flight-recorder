@@ -9,7 +9,8 @@
     { "i": "tokens-per-step", "x": 0, "y": 0, "w": 6, "h": 9, "moved": false, "static": false },
     { "i": "failure-rate", "x": 6, "y": 0, "w": 6, "h": 9, "moved": false, "static": false },
     { "i": "replay-matrix", "x": 0, "y": 9, "w": 6, "h": 9, "moved": false, "static": false },
-    { "i": "investigator-confidence", "x": 6, "y": 9, "w": 6, "h": 9, "moved": false, "static": false }
+    { "i": "investigator-confidence", "x": 6, "y": 9, "w": 6, "h": 9, "moved": false, "static": false },
+    { "i": "top-failing-tools", "x": 0, "y": 18, "w": 12, "h": 8, "moved": false, "static": false }
   ],
   "widgets": [
     {
@@ -260,6 +261,69 @@
             "legend": "confidence %",
             "disabled": false,
             "query": "SELECT toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts, max(attributes_number['investigation.confidence']) AS confidence FROM signoz_traces.distributed_signoz_index_v3 WHERE name = 'investigation' AND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} GROUP BY ts ORDER BY ts"
+          }
+        ]
+      }
+    },
+    {
+      "id": "top-failing-tools",
+      "title": "Top failing tools",
+      "description": "agent tools ranked by failure count, with call totals and failure rate",
+      "panelTypes": "table",
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": { "linksData": [] },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "fillSpans": false,
+      "isLogScale": false,
+      "isStacked": false,
+      "legendPosition": "bottom",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "softMax": 0,
+      "softMin": 0,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "yAxisUnit": "none",
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "query": {
+        "id": "3f3f8b3a-0005-4a5b-9c1d-failtoolspanel",
+        "queryType": "clickhouse_sql",
+        "unit": "",
+        "promql": [{ "name": "A", "query": "", "legend": "", "disabled": false }],
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [{ "expression": "count()" }],
+              "dataSource": "traces",
+              "disabled": true,
+              "expression": "A",
+              "filter": { "expression": "" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "name": "A",
+            "legend": "",
+            "disabled": false,
+            "query": "SELECT attributes_string['tool.name'] AS tool, countIf(status_code_string = 'Error') AS failures, count() AS calls, round(countIf(status_code_string = 'Error') / count(), 3) AS failure_rate FROM signoz_traces.distributed_signoz_index_v3 WHERE name LIKE 'tool.%' AND attributes_string['tool.name'] != '' GROUP BY tool ORDER BY failures DESC"
           }
         ]
       }
