@@ -226,8 +226,27 @@ def investigate(original_trace_id: str, triggered_by: str = "manual") -> dict:
             "investigation.confidence": verdict["confidence_pct"],
             "investigation.root_cause": verdict["root_cause"][:160]})
 
+        # Knowledge base: surface a similar prior incident, then record this
+        # one. Search first so the current incident isn't matched to itself.
+        from investigator import knowledge_base
+
+        similar = knowledge_base.find_similar(original_trace_id, verdict["root_cause"])
+        if similar:
+            verdict["similar"] = similar
+            span.set_attribute("investigation.similar_to", similar["incident_id"])
+            span.set_attribute("investigation.similar_match_pct", similar["match_pct"])
+            log.info("similar incident found", extra={
+                "event": "investigation.similar_found", "investigation.of": original_trace_id,
+                "similar.incident_id": similar["incident_id"], "similar.match_pct": similar["match_pct"]})
+        knowledge_base.record(original_trace_id, verdict, triggered_by)
+
     print(f"investigation trace: {investigation_trace_id}")
     print_verdict_card(verdict, diff)
+    if verdict.get("similar"):
+        s = verdict["similar"]
+        print(f"\nSimilar incident found ({s['match_pct']}% match): {s['incident_id'][:8]}…")
+        print(f"  previous root cause: {s['root_cause'][:120]}")
+        print(f"  previous fix:        {s['suggested_fix'][:120]}")
     return verdict
 
 

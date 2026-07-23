@@ -488,6 +488,14 @@ def _cache_path(trace_id: str) -> Path:
     return CACHE_DIR / f"verdict-{trace_id}.json"
 
 
+@app.get("/api/knowledge-base")
+def get_knowledge_base():
+    """All incidents the Flight Recorder has learned from."""
+    from investigator import knowledge_base
+
+    return {"incidents": knowledge_base.all_entries()}
+
+
 @app.get("/api/investigation/{trace_id}")
 def get_investigation(trace_id: str):
     path = _cache_path(trace_id)

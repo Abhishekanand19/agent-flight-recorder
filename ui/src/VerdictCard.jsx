@@ -62,6 +62,23 @@ export default function VerdictCard({ traceId, onVerdict, breakdown }) {
       )}
       {verdict && (
         <div className="card">
+          {verdict.similar && (
+            <div className="similar-incident">
+              <div className="similar-head">
+                <span className="similar-title">🔎 Similar incident found</span>
+                <span className="similar-match">{verdict.similar.match_pct}% match</span>
+              </div>
+              <p className="similar-line">
+                <span className="similar-label">Previous root cause:</span>{" "}
+                {verdict.similar.root_cause}
+              </p>
+              <p className="similar-line">
+                <span className="similar-label">Previous validated fix:</span>{" "}
+                {verdict.similar.suggested_fix}
+              </p>
+              <p className="similar-ref">incident {verdict.similar.incident_id.slice(0, 8)}…</p>
+            </div>
+          )}
           <p className="root-cause">{verdict.root_cause}</p>
 
           <div className="conf-breakdown">
