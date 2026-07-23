@@ -16,6 +16,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" }); // land at the top on every view change
     if (!traceId) {
       setIncident(null);
       setVerdict(null);

@@ -382,7 +382,12 @@ tr.no-border td { border-bottom: none; padding-bottom: 2px; }
 /* ---------- auto-investigation progress strip ---------- */
 .progress-strip { margin-top: 22px; border-left: 3px solid var(--red); }
 .progress-strip.strip-done { border-left-color: var(--green); }
+.strip-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .strip-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+.strip-cta {
+  margin: 0; background: var(--green); border-color: var(--green); color: #fff;
+  font-size: 12px; padding: 6px 12px; animation: fade-up 0.3s ease both;
+}
 .strip-stages { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 10px; }
 .strip-stage { color: var(--muted); font-size: 13px; opacity: 0.45; transition: opacity 0.3s ease, color 0.3s ease; }
 .strip-stage.lit { opacity: 1; color: var(--text); }
@@ -391,8 +396,24 @@ tr.no-border td { border-bottom: none; padding-bottom: 2px; }
 .strip-error { display: block; margin-top: 8px; color: var(--red); font-size: 12px; font-family: var(--font-mono); }
 .badge-auto { background: rgba(91, 157, 217, 0.15); color: var(--blue); border: 1px solid var(--blue); margin-left: 6px; }
 
-@media (max-width: 1100px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1100px) {
+  .tiles { grid-template-columns: repeat(3, 1fr); }
+  .cost-cells, .delta-cells { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 900px) {
   .waterfalls, .bottom { grid-template-columns: 1fr; }
   .tiles { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .app { padding: 16px 12px; }
+  header { flex-direction: column; align-items: stretch; }
+  header form { display: flex; }
+  header input { flex: 1; min-width: 0; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .cost-cells, .delta-cells { grid-template-columns: 1fr; }
+  .status-state { display: none; }
+  .row { grid-template-columns: 150px 1fr 52px; }
+  /* wide tables scroll inside their own panel instead of the page */
+  .panel:has(table) { overflow-x: auto; }
+  .incident-table, .cmp-table, .cost-table { min-width: 480px; }
 }

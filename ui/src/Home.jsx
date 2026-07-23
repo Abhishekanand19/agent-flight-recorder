@@ -119,15 +119,22 @@ const PIPELINE_STAGES = [
   { key: "done", icon: "✅", label: "Root cause found" },
 ];
 
-function ProgressStrip({ active }) {
+function ProgressStrip({ active, onOpen }) {
   if (!active || active.stage === "idle") return null;
   const reached =
     { generating: 0, replaying: 1, investigating: 2, done: 3, failed: 2 }[active.stage] ?? 0;
   return (
     <section className={`progress-strip panel ${active.stage === "done" ? "strip-done" : ""}`}>
-      <span className="strip-title">
-        Live investigation {active.trace_id ? `· ${active.trace_id.slice(0, 8)}…` : ""}
-      </span>
+      <div className="strip-header">
+        <span className="strip-title">
+          Live investigation {active.trace_id ? `· ${active.trace_id.slice(0, 8)}…` : ""}
+        </span>
+        {active.stage === "done" && active.trace_id && (
+          <button className="strip-cta" onClick={() => onOpen(active.trace_id)}>
+            View investigation →
+          </button>
+        )}
+      </div>
       <div className="strip-stages">
         {PIPELINE_STAGES.map((s, i) => (
           <span key={s.key} className={`strip-stage ${i <= reached ? "lit" : ""} ${i === reached && active.stage !== "done" ? "current" : ""}`}>
@@ -224,7 +231,7 @@ export default function Home({ onOpen }) {
   return (
     <>
       <Comparison avgRootCauseSeconds={stats.avg_root_cause_s} />
-      <ProgressStrip active={active} />
+      <ProgressStrip active={active} onOpen={onOpen} />
       <section className="status-card panel">
         <div className="status-head">
           <span className="monitor-dot" />
