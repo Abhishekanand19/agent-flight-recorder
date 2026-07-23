@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import Comparison from "./Comparison.jsx";
 
 function age(seconds) {
   if (seconds == null) return "—";
@@ -222,6 +223,7 @@ export default function Home({ onOpen }) {
 
   return (
     <>
+      <Comparison avgRootCauseSeconds={stats.avg_root_cause_s} />
       <ProgressStrip active={active} />
       <section className="status-card panel">
         <div className="status-head">
