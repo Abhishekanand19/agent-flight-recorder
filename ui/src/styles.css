@@ -129,6 +129,20 @@ tbody tr:last-child td { border-bottom: none; }
 .verdict ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); }
 .verdict li { margin: 5px 0; line-height: 1.45; }
 
+/* ---------- engineer action center ---------- */
+.action-center { margin-top: 16px; }
+.action-intro { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+.action-btn {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  background: var(--panel-raised); border: 1px solid var(--border); color: var(--text);
+  border-radius: 7px; padding: 9px 15px; font-size: 13px; font-weight: 600;
+  font-family: var(--font-ui); text-decoration: none; margin: 0;
+  transition: border-color 0.15s ease, filter 0.15s ease;
+}
+.action-btn:hover { border-color: #3a4152; filter: brightness(1.1); }
+.action-btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+
 /* ---------- similar incident (knowledge base) ---------- */
 .similar-incident {
   background: rgba(91, 157, 217, 0.09); border: 1px solid var(--blue);

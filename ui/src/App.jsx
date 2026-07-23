@@ -5,6 +5,7 @@ import Waterfall from "./Waterfall.jsx";
 import Matrix from "./Matrix.jsx";
 import VerdictCard from "./VerdictCard.jsx";
 import DeltaImpact from "./DeltaImpact.jsx";
+import ActionCenter from "./ActionCenter.jsx";
 
 export default function App() {
   const [traceId, setTraceId] = useState(null); // null = Operations Center
@@ -127,6 +128,8 @@ export default function App() {
                   breakdown={incident.confidence_breakdown}
                 />
               </section>
+
+              <ActionCenter incident={incident} verdict={verdict} />
             </>
           )}
         </>
