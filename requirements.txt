@@ -7,3 +7,5 @@ pytest
 langchain-google-genai
 fastapi
 uvicorn
+google-genai
+mcp
