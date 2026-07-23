@@ -168,6 +168,53 @@ def replay_failure_reason(tool_sequence: list[dict], verdict: dict | None) -> st
     return "Reproduced the original failure without applying the structural fix."
 
 
+def confidence_breakdown(matrix: list[dict], divergence: dict | None, verdict: dict | None) -> dict:
+    """Explain the investigator's confidence with concrete, human-readable
+    signals derived from the replay results already computed — not a new
+    confidence engine, just the evidence behind the score."""
+    non_fix = [m for m in matrix if not m["fix_applied"]]
+    non_fix_failed = [m for m in non_fix if not m["success"]]
+    fix_passed = [m for m in matrix if m["fix_applied"] and m["success"]]
+    reasons = {m.get("reason") for m in non_fix_failed if m.get("reason")}
+    tool = divergence["tool"] if divergence else None
+
+    signals = [
+        {
+            "label": "Replay consistency",
+            "detail": f"{len(non_fix_failed)}/{len(non_fix)} counterfactuals reproduced the failure",
+            "met": bool(non_fix) and len(non_fix_failed) == len(non_fix),
+        },
+        {
+            "label": "Validated fix",
+            "detail": (f"{fix_passed[0]['config_id']} passed with the structural fix applied"
+                       if fix_passed else "no fix-applied replay has passed"),
+            "met": bool(fix_passed),
+        },
+        {
+            "label": "Failure isolated to one tool",
+            "detail": f"all divergence is at tool.{tool}" if tool else "no single divergent tool identified",
+            "met": tool is not None,
+        },
+        {
+            "label": "Consistent failure signature",
+            "detail": ("every failing replay shares the same root cause"
+                       if len(reasons) == 1 else f"{len(reasons)} distinct failure reasons"),
+            "met": len(reasons) == 1,
+        },
+        {
+            "label": "Corroborating telemetry",
+            "detail": f"{len(matrix)} linked replay traces recorded in SigNoz",
+            "met": len(matrix) >= 2,
+        },
+    ]
+    return {
+        "confidence_pct": verdict.get("confidence_pct") if verdict else None,
+        "signals": signals,
+        "signals_met": sum(1 for s in signals if s["met"]),
+        "signals_total": len(signals),
+    }
+
+
 def investigation_status(trace_id: str) -> dict:
     """Has this incident been investigated, and at what confidence?"""
     rows = query(
@@ -220,6 +267,7 @@ def get_incident(trace_id: str):
             m["reason"] = replay_failure_reason(seq_by_config.get(m["config_id"], []), verdict)
 
     fix = next((m for m in matrix if m["success"] and m["fix_applied"]), None)
+    divergence = find_divergence(configs)
     return {
         "original": {"trace_id": trace_id, "spans": waterfall_spans(original_spans)},
         "fix": (
@@ -229,9 +277,10 @@ def get_incident(trace_id: str):
             else None
         ),
         "matrix": matrix,
-        "divergence": find_divergence(configs),
+        "divergence": divergence,
         "investigation": investigation_status(trace_id),
         "impact": counterfactual_impact(trace_id, fix["trace_id"]) if fix else None,
+        "confidence_breakdown": confidence_breakdown(matrix, divergence, verdict) if verdict else None,
     }
 
 

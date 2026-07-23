@@ -121,7 +121,11 @@ export default function App() {
 
               <section className="bottom">
                 <Matrix matrix={incident.matrix} />
-                <VerdictCard traceId={traceId} onVerdict={setVerdict} />
+                <VerdictCard
+                  traceId={traceId}
+                  onVerdict={setVerdict}
+                  breakdown={incident.confidence_breakdown}
+                />
               </section>
             </>
           )}

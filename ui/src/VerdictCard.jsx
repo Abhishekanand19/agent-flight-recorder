@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function VerdictCard({ traceId, onVerdict }) {
+export default function VerdictCard({ traceId, onVerdict, breakdown }) {
   const [verdict, setVerdictState] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -63,26 +63,38 @@ export default function VerdictCard({ traceId, onVerdict }) {
       {verdict && (
         <div className="card">
           <p className="root-cause">{verdict.root_cause}</p>
-          <div className="confidence">
-            <span className="conf-label">confidence</span>
+
+          <div className="conf-breakdown">
+            <div className="conf-head">
+              <span className="conf-label">confidence</span>
+              <span className="conf-pct">{verdict.confidence_pct}%</span>
+              {breakdown && (
+                <span className="conf-signals">
+                  backed by {breakdown.signals_met}/{breakdown.signals_total} signals
+                </span>
+              )}
+            </div>
             <span className="conf-track">
-              <span
-                className="conf-fill"
-                style={{ width: `${verdict.confidence_pct}%` }}
-              />
+              <span className="conf-fill" style={{ width: `${verdict.confidence_pct}%` }} />
             </span>
-            <span className="conf-pct">{verdict.confidence_pct}%</span>
+            {breakdown && (
+              <ul className="scorecard">
+                {breakdown.signals.map((s) => (
+                  <li key={s.label} className={s.met ? "met" : "unmet"}>
+                    <span className="score-icon">{s.met ? "✓" : "✕"}</span>
+                    <span className="score-body">
+                      <span className="score-label">{s.label}</span>
+                      <span className="score-detail">{s.detail}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
+
           <p>
             <strong>Suggested fix:</strong> {verdict.suggested_fix}
           </p>
-          {verdict.supporting_evidence?.length > 0 && (
-            <ul>
-              {verdict.supporting_evidence.map((e, i) => (
-                <li key={i}>{e}</li>
-              ))}
-            </ul>
-          )}
         </div>
       )}
     </div>
