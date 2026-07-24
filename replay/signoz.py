@@ -6,9 +6,16 @@ the same path the verifier agent uses.
 """
 
 import json
+import os
 import subprocess
+import urllib.error
+import urllib.request
 
 CLICKHOUSE_CONTAINER = "signoz-clickhouse"
+# Cloud deploys (e.g. Railway) can't `docker exec` into the local container.
+# Set CLICKHOUSE_HTTP_URL to a reachable ClickHouse HTTP endpoint
+# (e.g. http://default:@your-host:8123/) and queries go over HTTP instead.
+CLICKHOUSE_HTTP_URL = os.getenv("CLICKHOUSE_HTTP_URL")
 
 _QUERY = """
 SELECT
@@ -47,6 +54,8 @@ FORMAT JSONEachRow
 
 
 def _clickhouse(query: str) -> list[dict]:
+    if CLICKHOUSE_HTTP_URL:
+        return _clickhouse_http(query)
     result = subprocess.run(
         ["docker", "exec", CLICKHOUSE_CONTAINER, "clickhouse-client", "-q", query],
         capture_output=True,
@@ -56,6 +65,17 @@ def _clickhouse(query: str) -> list[dict]:
     if result.returncode != 0:
         raise RuntimeError(f"clickhouse query failed: {result.stderr.strip()}")
     return [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
+
+
+def _clickhouse_http(query: str) -> list[dict]:
+    """Run the query over ClickHouse's HTTP interface (for cloud deploys)."""
+    req = urllib.request.Request(CLICKHOUSE_HTTP_URL, data=query.encode(), method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            body = resp.read().decode()
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError(f"clickhouse http query failed: {exc.read().decode(errors='replace')}")
+    return [json.loads(line) for line in body.splitlines() if line.strip()]
 
 
 def _validate_trace_id(trace_id: str) -> None:

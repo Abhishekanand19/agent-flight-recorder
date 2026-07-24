@@ -33,8 +33,14 @@ log = get_logger("api")
 
 CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache"
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SIGNOZ_URL = "http://localhost:8080"
+# Overridable for cloud deploys where SigNoz is reachable at another host.
+SIGNOZ_URL = os.getenv("SIGNOZ_URL", "http://localhost:8080")
 SPAN_TABLE = "signoz_traces.distributed_signoz_index_v3"
+
+# Comma-separated allowed origins (add your Vercel frontend URL on Railway).
+# Defaults to the local Vite dev server.
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
 
 # Auto-investigations replay only the minimal contrast pair — one failing
 # config and the fix config — to protect free-tier quota. The full matrix
@@ -48,10 +54,18 @@ ACTIVE: dict = {"stage": "idle"}
 app = FastAPI(title="Agent Flight Recorder API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health")
+@app.get("/")
+def health():
+    """Liveness probe — deliberately does not touch SigNoz/ClickHouse so it
+    stays green on Railway even before observability data is reachable."""
+    return {"status": "ok", "service": "flight-recorder-api"}
 
 
 def waterfall_spans(spans: list[dict]) -> list[dict]:
