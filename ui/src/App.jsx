@@ -6,6 +6,7 @@ import Matrix from "./Matrix.jsx";
 import VerdictCard from "./VerdictCard.jsx";
 import DeltaImpact from "./DeltaImpact.jsx";
 import ActionCenter from "./ActionCenter.jsx";
+import { api } from "./api.js";
 
 export default function App() {
   const [traceId, setTraceId] = useState(null); // null = Operations Center
@@ -25,7 +26,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     setIncident(null);
-    fetch(`/api/incident/${traceId}`)
+    fetch(api(`/api/incident/${traceId}`))
       .then((r) => {
         if (!r.ok) throw new Error(`API ${r.status}`);
         return r.json();

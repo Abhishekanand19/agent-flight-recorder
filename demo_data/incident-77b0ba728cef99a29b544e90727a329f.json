@@ -1,0 +1,353 @@
+{
+ "original": {
+  "trace_id": "77b0ba728cef99a29b544e90727a329f",
+  "spans": [
+   {
+    "span_id": "f123e91cd2fc4bf1",
+    "parent_span_id": "",
+    "name": "support_request",
+    "start_ms": 0.0,
+    "duration_ms": 2032.7977,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": null
+   },
+   {
+    "span_id": "a99aec24347c2363",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "llm.chat",
+    "start_ms": 3.0329,
+    "duration_ms": 291.82,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   },
+   {
+    "span_id": "50ee281e22b6a323",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "tool.search_kb",
+    "start_ms": 297.8551,
+    "duration_ms": 0.0,
+    "error": false,
+    "error_message": null,
+    "tool_name": "search_kb",
+    "tool_input": "refund policy",
+    "llm_model": null
+   },
+   {
+    "span_id": "fa0d67a08f4270ac",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "llm.chat",
+    "start_ms": 301.4994,
+    "duration_ms": 448.3145,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   },
+   {
+    "span_id": "f5d07c8861b9519d",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "tool.check_order",
+    "start_ms": 752.9533,
+    "duration_ms": 0.0,
+    "error": false,
+    "error_message": null,
+    "tool_name": "check_order",
+    "tool_input": "123",
+    "llm_model": null
+   },
+   {
+    "span_id": "be540c93bbfbb204",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "llm.chat",
+    "start_ms": 754.9542,
+    "duration_ms": 207.9602,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   },
+   {
+    "span_id": "1ba71267b777d9d9",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "tool.issue_refund",
+    "start_ms": 967.5396,
+    "duration_ms": 1.2174,
+    "error": true,
+    "error_message": "refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
+    "tool_name": "issue_refund",
+    "tool_input": "{\"order_id\": \"123\", \"method\": \"refund_api_v1\"}",
+    "llm_model": null
+   },
+   {
+    "span_id": "f687baf5aa66790d",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "llm.chat",
+    "start_ms": 971.5852,
+    "duration_ms": 440.0721,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   },
+   {
+    "span_id": "c745214879632b7e",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "tool.search_kb",
+    "start_ms": 1415.6577,
+    "duration_ms": 0.0,
+    "error": false,
+    "error_message": null,
+    "tool_name": "search_kb",
+    "tool_input": "refund_api_v2 policy",
+    "llm_model": null
+   },
+   {
+    "span_id": "34c5c8ce80515a3c",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "llm.chat",
+    "start_ms": 1417.3153,
+    "duration_ms": 168.8757,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   },
+   {
+    "span_id": "94d96f72bc802d98",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "tool.search_kb",
+    "start_ms": 1590.7183,
+    "duration_ms": 0.0,
+    "error": false,
+    "error_message": null,
+    "tool_name": "search_kb",
+    "tool_input": "refund approval token",
+    "llm_model": null
+   },
+   {
+    "span_id": "96c52586f1a055e2",
+    "parent_span_id": "f123e91cd2fc4bf1",
+    "name": "llm.chat",
+    "start_ms": 1593.8625,
+    "duration_ms": 437.8969,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   }
+  ]
+ },
+ "fix": {
+  "trace_id": "f025cecd481947cef061a0e58bd60274",
+  "config_id": "cf-5",
+  "spans": [
+   {
+    "span_id": "bd15ba930ffa66d2",
+    "parent_span_id": "",
+    "name": "replay_run",
+    "start_ms": 0.0,
+    "duration_ms": 5002.3987,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": null
+   },
+   {
+    "span_id": "bfa89fecac1315d2",
+    "parent_span_id": "bd15ba930ffa66d2",
+    "name": "llm.chat",
+    "start_ms": 3695.6114,
+    "duration_ms": 594.186,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   },
+   {
+    "span_id": "001323e33d6a5b8e",
+    "parent_span_id": "bd15ba930ffa66d2",
+    "name": "tool.search_kb",
+    "start_ms": 4295.1985,
+    "duration_ms": 0.0,
+    "error": false,
+    "error_message": null,
+    "tool_name": "search_kb",
+    "tool_input": "refund policy",
+    "llm_model": null
+   },
+   {
+    "span_id": "fa840a05daf6e7bd",
+    "parent_span_id": "bd15ba930ffa66d2",
+    "name": "llm.chat",
+    "start_ms": 4296.9744,
+    "duration_ms": 186.24,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   },
+   {
+    "span_id": "2249489c33166d5f",
+    "parent_span_id": "bd15ba930ffa66d2",
+    "name": "tool.check_order",
+    "start_ms": 4487.0878,
+    "duration_ms": 0.0,
+    "error": false,
+    "error_message": null,
+    "tool_name": "check_order",
+    "tool_input": "123",
+    "llm_model": null
+   },
+   {
+    "span_id": "1f8a942f6b217c55",
+    "parent_span_id": "bd15ba930ffa66d2",
+    "name": "llm.chat",
+    "start_ms": 4488.3735,
+    "duration_ms": 277.7399,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   },
+   {
+    "span_id": "1b423bbfa8481502",
+    "parent_span_id": "bd15ba930ffa66d2",
+    "name": "tool.issue_refund",
+    "start_ms": 4770.7164,
+    "duration_ms": 0.0,
+    "error": false,
+    "error_message": null,
+    "tool_name": "issue_refund",
+    "tool_input": "{\"order_id\": \"123\", \"method\": \"refund_api_v2\"}",
+    "llm_model": null
+   },
+   {
+    "span_id": "2b929e6b1a91a397",
+    "parent_span_id": "bd15ba930ffa66d2",
+    "name": "llm.chat",
+    "start_ms": 4773.3833,
+    "duration_ms": 227.936,
+    "error": false,
+    "error_message": null,
+    "tool_name": null,
+    "tool_input": null,
+    "llm_model": "llama-3.3-70b-versatile"
+   }
+  ]
+ },
+ "matrix": [
+  {
+   "config_id": "cf-1",
+   "model": "llama-3.3-70b-versatile",
+   "temperature": 0.8,
+   "fix_applied": false,
+   "success": false,
+   "trace_id": "1135ece493b150eb6824d9809f230f88",
+   "reason": "Still using deprecated refund_api_v1, so the same failure was reproduced."
+  },
+  {
+   "config_id": "cf-5",
+   "model": "llama-3.3-70b-versatile",
+   "temperature": 0.8,
+   "fix_applied": true,
+   "success": true,
+   "trace_id": "f025cecd481947cef061a0e58bd60274"
+  }
+ ],
+ "divergence": {
+  "position": 2,
+  "tool": "issue_refund",
+  "successful_config_did": {
+   "tool": "issue_refund",
+   "input": "{\"order_id\": \"123\", \"method\": \"refund_api_v2\"}",
+   "error": null
+  },
+  "failing_config_did": {
+   "tool": "issue_refund",
+   "input": "{\"order_id\": \"123\", \"method\": \"refund_api_v1\"}",
+   "error": "refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token"
+  }
+ },
+ "investigation": {
+  "investigated": true,
+  "confidence": 100.0,
+  "verdict_cached": true
+ },
+ "impact": {
+  "original": {
+   "tokens": 3720,
+   "llm_calls": 6,
+   "avg_latency_ms": 332.4899,
+   "exec_ms": 1994.9394,
+   "model": "llama-3.3-70b-versatile",
+   "cost_usd": 0.002604
+  },
+  "fix": {
+   "tokens": 1889,
+   "llm_calls": 4,
+   "avg_latency_ms": 321.525475,
+   "exec_ms": 1286.1019,
+   "model": "llama-3.3-70b-versatile",
+   "cost_usd": 0.0013223
+  },
+  "deltas": {
+   "tokens": -1831,
+   "avg_latency_ms": -10.964425000000006,
+   "exec_ms": -708.8375000000001,
+   "cost_usd": -0.0012817
+  },
+  "pct": {
+   "tokens": -49.2,
+   "avg_latency_ms": -3.3,
+   "exec_ms": -35.5,
+   "cost_usd": -49.2
+  }
+ },
+ "confidence_breakdown": {
+  "confidence_pct": 100,
+  "signals": [
+   {
+    "label": "Replay consistency",
+    "detail": "1/1 counterfactuals reproduced the failure",
+    "met": true
+   },
+   {
+    "label": "Validated fix",
+    "detail": "cf-5 passed with the structural fix applied",
+    "met": true
+   },
+   {
+    "label": "Failure isolated to one tool",
+    "detail": "all divergence is at tool.issue_refund",
+    "met": true
+   },
+   {
+    "label": "Consistent failure signature",
+    "detail": "every failing replay shares the same root cause",
+    "met": true
+   },
+   {
+    "label": "Corroborating telemetry",
+    "detail": "2 linked replay traces recorded in SigNoz",
+    "met": true
+   }
+  ],
+  "signals_met": 5,
+  "signals_total": 5
+ }
+}

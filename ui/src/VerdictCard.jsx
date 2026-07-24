@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { api } from "./api.js";
 
 export default function VerdictCard({ traceId, onVerdict, breakdown }) {
   const [verdict, setVerdictState] = useState(null);
@@ -14,7 +15,7 @@ export default function VerdictCard({ traceId, onVerdict, breakdown }) {
   useEffect(() => {
     setVerdict(null);
     setError(null);
-    fetch(`/api/investigation/${traceId}`)
+    fetch(api(`/api/investigation/${traceId}`))
       .then((r) => (r.ok ? r.json() : null))
       .then(setVerdict)
       .catch(() => {});
@@ -23,7 +24,7 @@ export default function VerdictCard({ traceId, onVerdict, breakdown }) {
   const investigate = () => {
     setBusy(true);
     setError(null);
-    fetch(`/api/investigate/${traceId}`, { method: "POST" })
+    fetch(api(`/api/investigate/${traceId}`), { method: "POST" })
       .then((r) => {
         if (!r.ok) throw new Error(`API ${r.status}`);
         return r.json();

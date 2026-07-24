@@ -1,0 +1,168 @@
+{
+ "incidents": [
+  {
+   "incident_id": "bafff7b8cb0e4e3a567472da3042bf33",
+   "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` for the refund request, failing to identify and apply the required `refund_api_v2` and an approval token, even after initial knowledge base searches.",
+   "supporting_evidence": [
+    "original_errors: 'refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token'",
+    "original_tool_sequence: The 'issue_refund' tool was called with 'method': 'refund_api_v1' and resulted in the stated error.",
+    "configs[0].tool_sequence: The counterfactual replay also attempted 'issue_refund' with 'method': 'refund_api_v1' and failed with the identical error, indicating the model's persistent incorrect choice without a fix."
+   ],
+   "suggested_fix": "Enhance the knowledge base documentation for refund procedures to prominently feature `refund_api_v2` and the approval token requirement, and consider fine-tuning the model to correctly interpret and apply this updated information.",
+   "confidence_pct": 100,
+   "timestamp": "2026-07-24T18:01:49.515784+00:00",
+   "triggered_by": "alert"
+  },
+  {
+   "incident_id": "a1474403c5757fe92b72f4fe90d5758a",
+   "root_cause": "The LLM attempted to use a decommissioned API version (`refund_api_v1`) for issuing a refund, indicating outdated knowledge about the `issue_refund` tool's current requirements, specifically the need for `refund_api_v2` and an approval token.",
+   "supporting_evidence": [
+    "original_errors[0].error: 'refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token'",
+    "original_tool_sequence[2].tool: 'issue_refund' with input '{\"order_id\": \"123\", \"method\": \"refund_api_v1\"}'",
+    "configs[0].tool_sequence[2].tool: 'issue_refund' with identical incorrect input and error, demonstrating the persistence of the issue without a fix."
+   ],
+   "suggested_fix": "Update the definition or documentation of the `issue_refund` tool to explicitly state that `refund_api_v2` is required and an approval token must be provided.",
+   "confidence_pct": 95,
+   "timestamp": "2026-07-23T14:03:14.212561+00:00",
+   "triggered_by": "alert"
+  },
+  {
+   "incident_id": "e608ffff40c13555457e09e244f564eb",
+   "root_cause": "The LLM consistently failed to interpret the `issue_refund` tool's error message, which explicitly stated that `refund_api_v1` was decommissioned and `refund_api_v2` was required, leading it to repeatedly use the incorrect API version.",
+   "supporting_evidence": [
+    "original_errors: 'refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token'",
+    "original_tool_sequence: The 'issue_refund' tool was called with 'method': 'refund_api_v1' and failed.",
+    "divergence.failing_config_did: Shows 'issue_refund' called with 'method': 'refund_api_v1' resulting in an error.",
+    "divergence.successful_config_did: Shows 'issue_refund' called with 'method': 'refund_api_v2' and succeeding.",
+    "configs: All failed configurations (cf-1 to cf-4) show the same 'issue_refund' failure using 'refund_api_v1'.",
+    "configs: cf-5, with 'fix_applied': true, successfully called 'issue_refund' with 'method': 'refund_api_v2'."
+   ],
+   "suggested_fix": "Implement a mechanism for the LLM to parse tool error messages and dynamically adjust subsequent tool calls, specifically to extract and utilize required parameters like the correct API version (`refund_api_v2`).",
+   "confidence_pct": 100,
+   "timestamp": "2026-07-23T14:01:34.618118+00:00",
+   "triggered_by": "manual"
+  },
+  {
+   "incident_id": "28025f501fb09fe743e9103933d84271",
+   "root_cause": "The LLM attempted to use a decommissioned API (`refund_api_v1`) for issuing a refund and subsequently failed to correctly interpret the error message to switch to the required `refund_api_v2` with an approval token.",
+   "supporting_evidence": [
+    "original_errors: \"refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token\"",
+    "original_tool_sequence: The third step shows `issue_refund` with `method: \"refund_api_v1\"` failing with the stated error, followed by a `search_kb` call instead of a retry with `refund_api_v2`.",
+    "configs[0].tool_sequence: The third step in the counterfactual run also shows `issue_refund` with `method: \"refund_api_v1\"` failing with the exact same error, demonstrating consistent failure to adapt."
+   ],
+   "suggested_fix": "Update the model's knowledge base or tool definitions to reflect the deprecation of `refund_api_v1` and guide the model to use `refund_api_v2` with an approval token for refund operations.",
+   "confidence_pct": 100,
+   "timestamp": "2026-07-23T07:14:18.951398+00:00",
+   "triggered_by": "alert"
+  },
+  {
+   "incident_id": "f809ade2ecee6aba1c2669047f8a59ce",
+   "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` method for issuing a refund, instead of the required `refund_api_v2`.",
+   "supporting_evidence": [
+    "original_errors: 'refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token'",
+    "original_tool_sequence: `issue_refund` was called with `method: \"refund_api_v1\"`",
+    "divergence: highlights the difference in the `issue_refund` call's `method` parameter between failing (`refund_api_v1`) and successful (`refund_api_v2`) runs",
+    "cf-5: succeeded by calling `issue_refund` with `method: \"refund_api_v2\"`"
+   ],
+   "suggested_fix": "Update the LLM's tool definitions or knowledge base to ensure it always uses `refund_api_v2` for refund operations and understands any associated requirements like an approval token.",
+   "confidence_pct": 100,
+   "timestamp": "2026-07-23T02:16:47.445336+00:00",
+   "triggered_by": "manual"
+  },
+  {
+   "incident_id": "f16524bdfa9836d60da896ad5e1fea0c",
+   "root_cause": "The LLM attempted to use a decommissioned API version (refund_api_v1) for issuing a refund, indicating its internal knowledge or tool specification understanding for the `issue_refund` tool is outdated.",
+   "supporting_evidence": [
+    "original_errors: 'refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token'",
+    "original_tool_sequence: The 'issue_refund' tool was called with '\"method\": \"refund_api_v1\"'",
+    "configs[0].tool_sequence: The counterfactual 'cf-1' shows the identical failure, confirming the issue persists without a structural fix."
+   ],
+   "suggested_fix": "Update the `issue_refund` tool's definition or the LLM's internal knowledge base to correctly specify the use of `refund_api_v2` and the requirement for an approval token.",
+   "confidence_pct": 100,
+   "timestamp": "2026-07-23T02:15:05.640423+00:00",
+   "triggered_by": "alert"
+  },
+  {
+   "incident_id": "ef3d7e57b9b20778bdb6388eb83bc841",
+   "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` method for issuing a refund, leading to an API error that explicitly required `refund_api_v2`.",
+   "supporting_evidence": [
+    "original_errors: \"refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token\"",
+    "original_tool_sequence: The 'issue_refund' tool was called with 'method': 'refund_api_v1' and resulted in an error.",
+    "divergence: The 'failing_config_did' for 'issue_refund' used 'method': 'refund_api_v1', while the 'successful_config_did' used 'method': 'refund_api_v2'.",
+    "cf-5: With 'fix_applied': true, the 'issue_refund' tool was called with 'method': 'refund_api_v2' and 'success': true."
+   ],
+   "suggested_fix": "Update the LLM's tool definitions or knowledge base to correctly identify and utilize `refund_api_v2` for refund operations.",
+   "confidence_pct": 100,
+   "timestamp": "2026-07-23T02:15:05.622260+00:00",
+   "triggered_by": "alert"
+  },
+  {
+   "incident_id": "dcfa6ceb763921c5f68b88573093c595",
+   "root_cause": "The LLM attempted to use a decommissioned API (`refund_api_v1`) for issuing a refund, indicating outdated internal knowledge or a failure to consult up-to-date API documentation before making the initial tool call.",
+   "supporting_evidence": [
+    "original_errors: 'refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token'",
+    "original_tool_sequence: The `issue_refund` call used `method: \"refund_api_v1\"` and failed.",
+    "configs.cf-1.tool_sequence: The `issue_refund` call also used `method: \"refund_api_v1\"` and failed, demonstrating consistent incorrect behavior."
+   ],
+   "suggested_fix": "Update the model's knowledge base or tool definitions to reflect the decommissioning of `refund_api_v1` and the requirement for `refund_api_v2` with an approval token for refunds.",
+   "confidence_pct": 95,
+   "timestamp": "2026-07-23T02:15:05.606732+00:00",
+   "triggered_by": "alert"
+  },
+  {
+   "incident_id": "77b0ba728cef99a29b544e90727a329f",
+   "root_cause": "The LLM attempted to use a decommissioned refund API version (`refund_api_v1`) for the `issue_refund` tool, leading to an immediate failure. It then failed to successfully recover by identifying and using the correct `refund_api_v2` and obtaining an approval token.",
+   "supporting_evidence": [
+    "original_errors: refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
+    "original_tool_sequence: issue_refund called with method: \"refund_api_v1\"",
+    "configs[0].tool_sequence: issue_refund called with method: \"refund_api_v1\" and received the same error"
+   ],
+   "suggested_fix": "Update the `issue_refund` tool definition or the LLM's knowledge base to reflect the current requirement for `refund_api_v2` and the need for an approval token, ensuring the model can correctly identify and use the updated API.",
+   "confidence_pct": 100,
+   "timestamp": "2026-07-23T02:15:05.590210+00:00",
+   "triggered_by": "alert"
+  },
+  {
+   "incident_id": "6d9b6490c0e54e19eef08e33d2db9576",
+   "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` method when calling the `issue_refund` tool, instead of the required `refund_api_v2`.",
+   "supporting_evidence": [
+    "original_errors: 'refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token'",
+    "original_tool_sequence: 'issue_refund' called with 'method: \"refund_api_v1\"' resulting in an error",
+    "divergence: 'failing_config_did' shows 'method: \"refund_api_v1\"' while 'successful_config_did' shows 'method: \"refund_api_v2\"'",
+    "cf-5: 'fix_applied: true' and 'success: true' when 'issue_refund' was called with 'method: \"refund_api_v2\"'"
+   ],
+   "suggested_fix": "Update the LLM's knowledge base or tool definitions to ensure it correctly identifies and uses `refund_api_v2` for refunds.",
+   "confidence_pct": 100,
+   "timestamp": "2026-07-23T02:15:05.578009+00:00",
+   "triggered_by": "alert"
+  },
+  {
+   "incident_id": "5170d0efbc5410d9c50d7da88f213063",
+   "root_cause": "The LLM failed to correctly identify and utilize the current refund API (`refund_api_v2`) and its prerequisite (an approval token), instead attempting to use a decommissioned API (`refund_api_v1`) for the refund operation.",
+   "supporting_evidence": [
+    "original_errors[0].error: 'refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token'",
+    "original_tool_sequence[2].input: `{\"order_id\": \"123\", \"method\": \"refund_api_v1\"}`",
+    "configs[0].tool_sequence[2].input: `{\"order_id\": \"123\", \"method\": \"refund_api_v1\"}`",
+    "original_tool_sequence[3].input: 'refund_api_v2'",
+    "configs[0].tool_sequence[4].input: 'obtaining approval token for refund_api_v2'"
+   ],
+   "suggested_fix": "Update the LLM's training data or prompt engineering to ensure it prioritizes `refund_api_v2` for refunds and understands the necessity of obtaining an approval token before calling the `issue_refund` tool.",
+   "confidence_pct": 95,
+   "timestamp": "2026-07-23T02:15:05.564000+00:00",
+   "triggered_by": "alert"
+  },
+  {
+   "incident_id": "505a6eb102a5e3f1696633a2c5d33328",
+   "root_cause": "The LLM attempted to use a deprecated refund API (refund_api_v1) because its internal knowledge or tool definitions were outdated, leading to a failure to use the required refund_api_v2 and an approval token.",
+   "supporting_evidence": [
+    "original_errors: refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
+    "original_tool_sequence: issue_refund called with {\"order_id\": \"123\", \"method\": \"refund_api_v1\"}",
+    "configs[0].tool_sequence: issue_refund called with {\"order_id\": \"123\", \"method\": \"refund_api_v1\"} and same error, indicating consistent outdated knowledge."
+   ],
+   "suggested_fix": "Update the LLM's knowledge base and tool definitions to reflect the current refund API (refund_api_v2) and its requirement for an approval token.",
+   "confidence_pct": 100,
+   "timestamp": "2026-07-23T02:15:05.528670+00:00",
+   "triggered_by": "alert"
+  }
+ ]
+}

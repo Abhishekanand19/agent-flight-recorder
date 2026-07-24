@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Comparison from "./Comparison.jsx";
+import { api } from "./api.js";
 
 function age(seconds) {
   if (seconds == null) return "—";
@@ -159,10 +160,10 @@ export default function Home({ onOpen }) {
   const loadAll = useCallback(
     () =>
       Promise.all([
-        fetch("/api/stats").then((r) => r.json()),
-        fetch("/api/incidents").then((r) => r.json()),
-        fetch("/api/failing-tools").then((r) => r.json()),
-        fetch("/api/replay-cost").then((r) => r.json()),
+        fetch(api("/api/stats")).then((r) => r.json()),
+        fetch(api("/api/incidents")).then((r) => r.json()),
+        fetch(api("/api/failing-tools")).then((r) => r.json()),
+        fetch(api("/api/replay-cost")).then((r) => r.json()),
       ])
         .then(([s, i, t, c]) => {
           setStats(s);
@@ -179,7 +180,7 @@ export default function Home({ onOpen }) {
     loadAll();
     const slow = setInterval(loadAll, 15000); // incidents appear by themselves
     const fast = setInterval(
-      () => fetch("/api/investigations/active").then((r) => r.json()).then(setActive).catch(() => {}),
+      () => fetch(api("/api/investigations/active")).then((r) => r.json()).then(setActive).catch(() => {}),
       3000
     );
     return () => {
@@ -200,10 +201,10 @@ export default function Home({ onOpen }) {
   const busy = ["generating", "replaying", "investigating"].includes(active?.stage);
 
   const simulateCrash = () => {
-    fetch("/api/simulate-crash", { method: "POST" })
+    fetch(api("/api/simulate-crash"), { method: "POST" })
       .then((r) => r.json())
       .then(() =>
-        fetch("/api/investigations/active").then((r) => r.json()).then(setActive)
+        fetch(api("/api/investigations/active")).then((r) => r.json()).then(setActive)
       )
       .catch((e) => setError(String(e)));
   };

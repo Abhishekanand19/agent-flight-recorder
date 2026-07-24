@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from api import demo
 from agent.telemetry import get_logger, init_telemetry
 from agent.tools import DECOMMISSIONED_METHODS
 from investigator.investigate import find_divergence, latest_run_per_config, tool_sequence
@@ -246,6 +247,11 @@ def investigation_status(trace_id: str) -> dict:
 
 @app.get("/api/incident/{trace_id}")
 def get_incident(trace_id: str):
+    if demo.DEMO_MODE:
+        d = demo.incident(trace_id)
+        if d is None:
+            raise HTTPException(status_code=404, detail="incident not found in demo data")
+        return d
     try:
         original_spans = fetch_trace(trace_id)
     except LookupError as exc:
@@ -301,6 +307,8 @@ def get_incident(trace_id: str):
 @app.get("/api/incidents")
 def list_incidents():
     """Every incident the Flight Recorder knows: one row per replayed trace."""
+    if demo.DEMO_MODE:
+        return demo.incidents()
     replays = query(
         "SELECT attributes_string['replay.of'] AS trace_id, count() AS replay_count, "
         "countIf(attributes_bool['replay.success']) AS successes, "
@@ -392,6 +400,8 @@ def latest_alert() -> dict | None:
 @app.get("/api/stats")
 def get_stats():
     """Fleet aggregates for the Operations Center status card and tiles."""
+    if demo.DEMO_MODE:
+        return demo.stats()
     activity = query(
         "SELECT uniqExactIf(trace_id, toDate(timestamp) = today()) AS traces_today, "
         "max(toUnixTimestamp64Nano(timestamp)) AS last_span_ns "
@@ -434,6 +444,8 @@ def get_stats():
 def replay_cost():
     """Cost & resource analysis over replay_run spans (metrics stamped at
     replay time). Aggregate totals plus a per-model breakdown."""
+    if demo.DEMO_MODE:
+        return demo.replay_cost()
     filt = ("WHERE name = 'replay_run' AND mapContains(attributes_number, 'replay.cost_usd')")
     agg = query(
         "SELECT count() AS replays, "
@@ -477,6 +489,8 @@ def failing_tools():
     """Which agent tools fail most, from the tool.* spans already in SigNoz.
     Returns per-tool failure count, call count, failure rate, and each tool's
     share of all failures — ranked most-failing first."""
+    if demo.DEMO_MODE:
+        return demo.failing_tools()
     rows = query(
         "SELECT attributes_string['tool.name'] AS tool, "
         "countIf(status_code_string = 'Error') AS failures, count() AS calls "
@@ -505,6 +519,8 @@ def _cache_path(trace_id: str) -> Path:
 @app.get("/api/knowledge-base")
 def get_knowledge_base():
     """All incidents the Flight Recorder has learned from."""
+    if demo.DEMO_MODE:
+        return demo.knowledge_base()
     from investigator import knowledge_base
 
     return {"incidents": knowledge_base.all_entries()}
@@ -512,6 +528,11 @@ def get_knowledge_base():
 
 @app.get("/api/investigation/{trace_id}")
 def get_investigation(trace_id: str):
+    if demo.DEMO_MODE:
+        d = demo.investigation(trace_id)
+        if d is None:
+            raise HTTPException(status_code=404, detail="no investigation in demo data")
+        return d
     path = _cache_path(trace_id)
     if not path.exists():
         raise HTTPException(status_code=404, detail="no investigation cached for this trace")
@@ -650,6 +671,11 @@ def simulate_crash_pipeline() -> None:
             "event": "simulate.failed", "error.component": "flight-recorder-api"})
 
 
+def _set_active(state: dict) -> None:
+    global ACTIVE
+    ACTIVE = state
+
+
 @app.post("/api/simulate-crash")
 def simulate_crash(background: BackgroundTasks):
     """Trigger the whole incident lifecycle with one click: generate a
@@ -657,6 +683,10 @@ def simulate_crash(background: BackgroundTasks):
     follows along via /api/investigations/active."""
     if ACTIVE.get("stage") in ("generating", "replaying", "investigating"):
         return {"status": "pipeline_busy", "active": ACTIVE}
+    if demo.DEMO_MODE:
+        # Animate the pipeline stages, then reveal a real captured incident.
+        background.add_task(demo.run_simulation, _set_active)
+        return {"status": "simulation_started", "demo": True}
     log.info("simulate crash requested", extra={"event": "simulate.requested"})
     background.add_task(simulate_crash_pipeline)
     return {"status": "simulation_started"}
@@ -669,6 +699,11 @@ def investigations_active():
 
 @app.post("/api/investigate/{trace_id}")
 def post_investigate(trace_id: str):
+    if demo.DEMO_MODE:
+        d = demo.investigation(trace_id)
+        if d is None:
+            raise HTTPException(status_code=404, detail="no investigation in demo data")
+        return d
     path = _cache_path(trace_id)
     if path.exists():  # never burn Gemini quota twice for the same trace
         return json.loads(path.read_text())
