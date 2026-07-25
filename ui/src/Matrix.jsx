@@ -31,7 +31,16 @@ export default function Matrix({ matrix }) {
               {m.reason && (
                 <tr className="reason-row">
                   <td colSpan={5}>
-                    <span className="reason-label">Reason:</span> {m.reason}
+                    <span className={`reason-label ${m.success ? "ok" : ""}`}>
+                      {m.success ? "Why it passed:" : "Reason:"}
+                    </span>{" "}
+                    {m.reason}
+                    {(m.latency_ms || m.tokens) && (
+                      <span className="reason-metric">
+                        {m.latency_ms ? ` · ${m.latency_ms} ms` : ""}
+                        {m.tokens ? ` · ${(m.tokens / 1000).toFixed(1)}k tok` : ""}
+                      </span>
+                    )}
                   </td>
                 </tr>
               )}

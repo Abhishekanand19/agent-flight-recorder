@@ -2,6 +2,7 @@ import React from "react";
 
 // Incident lifecycle: each step lights up from real data, no guesses.
 export default function Timeline({ incident, verdict }) {
+  const times = incident.timeline_times || [];
   const steps = [
     { label: "Original", done: true },
     { label: "Replayed", done: incident.matrix.length > 0 },
@@ -16,7 +17,10 @@ export default function Timeline({ incident, verdict }) {
           {i > 0 && <span className={`timeline-bar ${s.done ? "done" : ""}`} />}
           <span className={`timeline-step ${s.done ? "done" : ""}`}>
             <span className="timeline-dot">{s.done ? "✓" : ""}</span>
-            {s.label}
+            <span className="timeline-text">
+              {s.label}
+              {times[i] && <span className="timeline-time">{times[i]}</span>}
+            </span>
           </span>
         </React.Fragment>
       ))}

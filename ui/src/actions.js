@@ -82,29 +82,52 @@ export function buildIssue(incident, verdict) {
   const matrix = incident.matrix;
   const failed = matrix.filter((m) => !m.success).length;
   const passed = matrix.filter((m) => m.success).length;
+  const ctx = incident.context || {};
+  const d = incident.impact?.deltas;
   const short = verdict.root_cause.length > 70 ? verdict.root_cause.slice(0, 70) + "…" : verdict.root_cause;
+
+  const impactLines = d
+    ? [
+        `- Latency: ${Math.round(d.avg_latency_ms)} ms`,
+        `- Tokens: ${d.tokens}`,
+        `- Execution time: ${Math.round(d.exec_ms)} ms`,
+        `- Estimated cost: $${d.cost_usd.toFixed(4)}`,
+      ]
+    : ["- Validated fix reduces token usage and latency versus the original failure."];
 
   const body = [
     `**Trace ID:** \`${tid}\``,
     `**SigNoz trace:** ${SIGNOZ}/trace/${tid}`,
+    `**Service:** ${ctx.service || "Refund Service"}  ·  **Tool:** ${ctx.tool || "issue_refund()"}  ·  **Model:** ${ctx.model || "Llama 3.3 70B"}`,
     `**Confidence:** ${verdict.confidence_pct}%`,
+    "",
+    "## Summary",
+    incident.summary || `The AI support agent failed while processing "${ctx.customer || incident.original.trace_id}". Flight Recorder replayed the incident, validated a fix, and produced this report.`,
     "",
     "## Root cause",
     verdict.root_cause,
     "",
-    "## Suggested / validated fix",
+    "## Evidence",
+    ...(verdict.supporting_evidence || []).map((e) => `- ${e}`),
+    `- Replay matrix: ${failed}/${matrix.length} counterfactuals reproduced the failure; ${passed} passed with the fix applied.`,
+    "",
+    "## Validated fix",
     verdict.suggested_fix,
     "",
-    "## Supporting evidence",
-    ...(verdict.supporting_evidence || []).map((e) => `- ${e}`),
+    "## Impact",
+    ...impactLines,
     "",
-    "## Replay summary",
-    `${failed}/${matrix.length} counterfactual configs reproduced the failure; ${passed} passed with the structural fix applied.`,
-    ...matrix.map(
-      (m) => `- \`${m.config_id}\` ${m.model} @ ${Number(m.temperature).toFixed(1)}${m.fix_applied ? " (fix)" : ""}: **${m.success ? "PASS" : "FAIL"}**`
-    ),
+    "## Suggested action",
+    "- Ship the corrected refund knowledge-base entry (`refund_api_v2` + approval token).",
+    "- Add a guard/lint that rejects calls to decommissioned tool versions.",
+    "- Re-run the counterfactual replay as a regression check before merge.",
     "",
-    "_Filed from the Agent Flight Recorder Engineer Action Center._",
+    "## Acceptance criteria",
+    "- [ ] `issue_refund` uses `refund_api_v2` with a valid approval token.",
+    "- [ ] The fix-applied replay (cf-5) passes and no counterfactual regresses.",
+    "- [ ] No calls to `refund_api_v1` remain in the agent's tool paths.",
+    "",
+    "_Filed from the Agent Flight Recorder Engineer Action Center — deterministic replay of a captured incident._",
   ].join("\n");
 
   return { title: `[Agent Incident] ${short}`, body };

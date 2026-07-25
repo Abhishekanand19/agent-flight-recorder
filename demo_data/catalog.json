@@ -3,7 +3,7 @@
   {
    "trace_id": "e608ffff40c13555457e09e244f564eb",
    "request": "Refund order #123",
-   "summary": "The AI support agent failed while processing a refund. SigNoz captured the failed trace; Flight Recorder replayed the execution, found the root cause, validated a fix, and generated engineer actions.",
+   "summary": "Customer requested a refund. The AI agent called a deprecated refund tool. SigNoz captured the telemetry. Flight Recorder replayed the incident, counterfactual analysis validated the fix, and root-cause investigation completed.",
    "context": {
     "customer": "Refund order #123",
     "application": "AI Customer Support",
@@ -15,13 +15,13 @@
    "row": {
     "trace_id": "e608ffff40c13555457e09e244f564eb",
     "request": "Refund order #123",
-    "started_at_ns": 0.0,
+    "started_at_ns": 0,
     "error": "refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
     "replay_count": 5,
     "fix_validated": true,
     "investigated": true,
     "confidence": 98,
-    "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` method for issuing the refund, failing to identify and utilize the required `refund_api_v2` method.",
+    "root_cause": "The support agent invoked the deprecated `refund_api_v1` tool. The refund service decommissioned that version in favour of `refund_api_v2` (which requires an approval token), but the agent's knowledge base still referenced the retired endpoint. Every attempt returned `404 Tool Deprecated`, so the refund could not be completed.",
     "root_cause_seconds": 92,
     "auto": true,
     "signoz_url": "http://localhost:8080/trace/e608ffff40c13555457e09e244f564eb"
@@ -70,7 +70,7 @@
   {
    "trace_id": "6d9b6490c0e54e19eef08e33d2db9576",
    "request": "Payment deducted twice for order #512",
-   "summary": "A double-charge refund request failed in the AI support agent. SigNoz recorded the trace; Flight Recorder reproduced the failure and confirmed the same decommissioned-API root cause, then validated the fix.",
+   "summary": "Customer requested a refund. The AI agent called a deprecated refund tool. SigNoz captured the telemetry. Flight Recorder replayed the incident, counterfactual analysis validated the fix, and root-cause investigation completed.",
    "context": {
     "customer": "Payment deducted twice for order #512",
     "application": "AI Customer Support",
@@ -82,13 +82,13 @@
    "row": {
     "trace_id": "6d9b6490c0e54e19eef08e33d2db9576",
     "request": "Payment deducted twice for order #512",
-    "started_at_ns": 0.0,
+    "started_at_ns": 0,
     "error": "refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
     "replay_count": 5,
     "fix_validated": true,
     "investigated": true,
     "confidence": 97,
-    "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` method for issuing the refund, failing to identify and utilize the required `refund_api_v2` method.",
+    "root_cause": "The support agent invoked the deprecated `refund_api_v1` tool. The refund service decommissioned that version in favour of `refund_api_v2` (which requires an approval token), but the agent's knowledge base still referenced the retired endpoint. Every attempt returned `404 Tool Deprecated`, so the refund could not be completed.",
     "root_cause_seconds": 92,
     "auto": true,
     "signoz_url": "http://localhost:8080/trace/6d9b6490c0e54e19eef08e33d2db9576"
@@ -137,7 +137,7 @@
   {
    "trace_id": "ef3d7e57b9b20778bdb6388eb83bc841",
    "request": "Cancel order #847 and issue refund",
-   "summary": "A cancellation-and-refund request failed. SigNoz captured the incident; Flight Recorder replayed it across counterfactuals and traced it to the stale refund policy, validating a fix.",
+   "summary": "Customer requested a refund. The AI agent called a deprecated refund tool. SigNoz captured the telemetry. Flight Recorder replayed the incident, counterfactual analysis validated the fix, and root-cause investigation completed.",
    "context": {
     "customer": "Cancel order #847 and issue refund",
     "application": "AI Customer Support",
@@ -149,13 +149,13 @@
    "row": {
     "trace_id": "ef3d7e57b9b20778bdb6388eb83bc841",
     "request": "Cancel order #847 and issue refund",
-    "started_at_ns": 0.0,
+    "started_at_ns": 0,
     "error": "refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
     "replay_count": 5,
     "fix_validated": true,
     "investigated": true,
     "confidence": 97,
-    "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` method for issuing the refund, failing to identify and utilize the required `refund_api_v2` method.",
+    "root_cause": "The support agent invoked the deprecated `refund_api_v1` tool. The refund service decommissioned that version in favour of `refund_api_v2` (which requires an approval token), but the agent's knowledge base still referenced the retired endpoint. Every attempt returned `404 Tool Deprecated`, so the refund could not be completed.",
     "root_cause_seconds": 92,
     "auto": true,
     "signoz_url": "http://localhost:8080/trace/ef3d7e57b9b20778bdb6388eb83bc841"

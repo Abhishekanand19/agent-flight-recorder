@@ -61,7 +61,7 @@ def search_kb(query: str) -> str:
     with get_tracer().start_as_current_span("tool.search_kb") as span:
         span.set_attribute("tool.name", "search_kb")
         span.set_attribute("tool.input", query)
-        log.info("knowledge base searched", extra={
+        log.info("Searching refund policy in knowledge base", extra={
             "event": "tool.invoked", "tool.name": "search_kb", "tool.input": query})
         return do_search_kb(query)
 
@@ -72,7 +72,7 @@ def check_order(order_id: str) -> str:
     with get_tracer().start_as_current_span("tool.check_order") as span:
         span.set_attribute("tool.name", "check_order")
         span.set_attribute("tool.input", order_id)
-        log.info("order looked up", extra={
+        log.info("Fetching customer order", extra={
             "event": "tool.invoked", "tool.name": "check_order", "tool.input": order_id})
         return do_check_order(order_id)
 
@@ -84,18 +84,18 @@ def issue_refund(order_id: str, method: str) -> str:
     with get_tracer().start_as_current_span("tool.issue_refund") as span:
         span.set_attribute("tool.name", "issue_refund")
         span.set_attribute("tool.input", json.dumps({"order_id": order_id, "method": method}))
-        log.info("refund requested", extra={
+        log.info(f"Calling {method} for order {order_id}", extra={
             "event": "tool.invoked", "tool.name": "issue_refund",
             "order.id": order_id, "refund.method": method})
         try:
             result = do_issue_refund(order_id, method)
-            log.info("refund issued", extra={
+            log.info("Refund issued successfully", extra={
                 "event": "tool.succeeded", "tool.name": "issue_refund", "order.id": order_id})
             return result
         except ValueError as exc:
             span.record_exception(exc)
             span.set_status(Status(StatusCode.ERROR, str(exc)))
-            log.error("refund failed", exc_info=exc, extra={
+            log.error("issue_refund failed — refund API deprecated", exc_info=exc, extra={
                 "event": "tool.error", "tool.name": "issue_refund",
                 "order.id": order_id, "refund.method": method, "error.component": "agent"})
             return f"ERROR: refund failed: {exc}"

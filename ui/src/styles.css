@@ -345,6 +345,11 @@ tr.no-border td { border-bottom: none; padding-bottom: 2px; }
   color: var(--muted); font-size: 12px; font-family: var(--font-ui); line-height: 1.4;
 }
 .reason-row .reason-label { color: var(--red); font-weight: 600; }
+.reason-row .reason-label.ok { color: var(--green); }
+.reason-row .reason-metric { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+
+.timeline-text { display: inline-flex; flex-direction: column; line-height: 1.2; }
+.timeline-time { color: var(--muted); font-size: 10.5px; font-family: var(--font-mono); margin-top: 1px; }
 
 /* ---------- delta impact ---------- */
 .delta-impact { margin-top: 16px; border-top: 3px solid var(--green); }

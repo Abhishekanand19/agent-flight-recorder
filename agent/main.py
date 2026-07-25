@@ -22,7 +22,7 @@ def run_request(query: str) -> tuple[str, str]:
     with get_tracer().start_as_current_span("support_request") as span:
         span.set_attribute("request.query", query)
         trace_id = format(span.get_span_context().trace_id, "032x")
-        log.info("support request received", extra={
+        log.info("Received support request", extra={
             "event": "request.received", "request.query": query})
         try:
             result = graph.invoke(

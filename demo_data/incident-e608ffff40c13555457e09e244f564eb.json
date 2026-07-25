@@ -234,7 +234,9 @@
    "fix_applied": false,
    "success": false,
    "trace_id": "1ea96b1fd41ab8e64ddde3481b0d9e3c",
-   "reason": "Still using deprecated refund_api_v1, so the same failure was reproduced."
+   "reason": "Called deprecated refund_api_v1 \u2192 404 Tool Deprecated; no fallback attempted.",
+   "latency_ms": 612,
+   "tokens": 2818
   },
   {
    "config_id": "cf-2",
@@ -243,7 +245,9 @@
    "fix_applied": false,
    "success": false,
    "trace_id": "31c46036e617eab81033d49e73156d3e",
-   "reason": "Still using deprecated refund_api_v1, so the same failure was reproduced."
+   "reason": "Retried the same deprecated refund_api_v1 after the 404 instead of switching APIs.",
+   "latency_ms": 548,
+   "tokens": 2611
   },
   {
    "config_id": "cf-3",
@@ -252,7 +256,9 @@
    "fix_applied": false,
    "success": false,
    "trace_id": "8c21465238b594e83ced9c39041dc07e",
-   "reason": "Still using deprecated refund_api_v1, so the same failure was reproduced."
+   "reason": "Tool-routing error \u2014 reused refund_api_v1 from the stale policy, not refund_api_v2.",
+   "latency_ms": 1032,
+   "tokens": 3140
   },
   {
    "config_id": "cf-4",
@@ -261,7 +267,9 @@
    "fix_applied": false,
    "success": false,
    "trace_id": "f199070145845d083b92c2620233f93b",
-   "reason": "Still using deprecated refund_api_v1, so the same failure was reproduced."
+   "reason": "Knowledge retrieval returned the outdated refund policy; no approval-token path found.",
+   "latency_ms": 921,
+   "tokens": 2984
   },
   {
    "config_id": "cf-5",
@@ -269,7 +277,10 @@
    "temperature": 0.8,
    "fix_applied": true,
    "success": true,
-   "trace_id": "87c324ccbfea005a6ea524a4cef50793"
+   "trace_id": "87c324ccbfea005a6ea524a4cef50793",
+   "reason": "Passed \u2014 corrected knowledge base returned refund_api_v2; refund issued with a valid approval token.",
+   "latency_ms": 564,
+   "tokens": 1906
   }
  ],
  "divergence": {
@@ -341,8 +352,8 @@
    },
    {
     "label": "Consistent failure signature",
-    "detail": "every failing replay shares the same root cause",
-    "met": true
+    "detail": "4 distinct failure reasons",
+    "met": false
    },
    {
     "label": "Corroborating telemetry",
@@ -350,7 +361,7 @@
     "met": true
    }
   ],
-  "signals_met": 5,
+  "signals_met": 4,
   "signals_total": 5
  },
  "context": {
@@ -361,10 +372,17 @@
   "tool": "issue_refund()",
   "status": "Fix validated"
  },
- "summary": "The AI support agent failed while processing a refund. SigNoz captured the failed trace; Flight Recorder replayed the execution, found the root cause, validated a fix, and generated engineer actions.",
+ "summary": "Customer requested a refund. The AI agent called a deprecated refund tool. SigNoz captured the telemetry. Flight Recorder replayed the incident, counterfactual analysis validated the fix, and root-cause investigation completed.",
  "replay_stats": {
   "counterfactuals": 5,
   "validated": 1,
   "failed": 4
- }
+ },
+ "timeline_times": [
+  "14:32:14",
+  "14:32:47",
+  "14:33:29",
+  "14:33:31",
+  "14:33:58"
+ ]
 }
