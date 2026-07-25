@@ -36,7 +36,7 @@ export default function VerdictCard({ traceId, onVerdict, breakdown }) {
 
   return (
     <div className="panel verdict">
-      <h2>Crash investigation</h2>
+      <h2>Root cause analysis</h2>
       {!verdict && !busy && (
         <div className="empty-state">
           <p className="empty-title">No investigation cached for this incident</p>

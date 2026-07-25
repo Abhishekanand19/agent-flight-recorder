@@ -1,13 +1,13 @@
 {
  "original": {
-  "trace_id": "bafff7b8cb0e4e3a567472da3042bf33",
+  "trace_id": "ef3d7e57b9b20778bdb6388eb83bc841",
   "spans": [
    {
-    "span_id": "67f6f68b30533d39",
+    "span_id": "907017c2ee5125d9",
     "parent_span_id": "",
     "name": "support_request",
     "start_ms": 0.0,
-    "duration_ms": 2788.8781,
+    "duration_ms": 2268.0299,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -15,11 +15,11 @@
     "llm_model": null
    },
    {
-    "span_id": "89289dd8bc1d7a90",
-    "parent_span_id": "67f6f68b30533d39",
+    "span_id": "d1445135fef40f78",
+    "parent_span_id": "907017c2ee5125d9",
     "name": "llm.chat",
-    "start_ms": 11.5696,
-    "duration_ms": 916.6652,
+    "start_ms": 6.2628,
+    "duration_ms": 729.9615,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -27,10 +27,10 @@
     "llm_model": "llama-3.3-70b-versatile"
    },
    {
-    "span_id": "8fabf3603fc53641",
-    "parent_span_id": "67f6f68b30533d39",
+    "span_id": "2a7163787f223dc2",
+    "parent_span_id": "907017c2ee5125d9",
     "name": "tool.search_kb",
-    "start_ms": 933.6714,
+    "start_ms": 742.8714,
     "duration_ms": 0.0,
     "error": false,
     "error_message": null,
@@ -39,11 +39,11 @@
     "llm_model": null
    },
    {
-    "span_id": "617562b203bbba57",
-    "parent_span_id": "67f6f68b30533d39",
+    "span_id": "87a7f5dae0d0465a",
+    "parent_span_id": "907017c2ee5125d9",
     "name": "llm.chat",
-    "start_ms": 934.75,
-    "duration_ms": 242.2501,
+    "start_ms": 744.8824,
+    "duration_ms": 182.0826,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -51,10 +51,10 @@
     "llm_model": "llama-3.3-70b-versatile"
    },
    {
-    "span_id": "77e0b8104b1f91ed",
-    "parent_span_id": "67f6f68b30533d39",
+    "span_id": "bb4e39773c0ab051",
+    "parent_span_id": "907017c2ee5125d9",
     "name": "tool.check_order",
-    "start_ms": 1179.7437,
+    "start_ms": 930.1467,
     "duration_ms": 0.0,
     "error": false,
     "error_message": null,
@@ -63,11 +63,11 @@
     "llm_model": null
    },
    {
-    "span_id": "cf6d793b521a9304",
-    "parent_span_id": "67f6f68b30533d39",
+    "span_id": "6315c739b1461afb",
+    "parent_span_id": "907017c2ee5125d9",
     "name": "llm.chat",
-    "start_ms": 1181.3708,
-    "duration_ms": 663.064,
+    "start_ms": 931.6745,
+    "duration_ms": 167.6886,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -75,11 +75,11 @@
     "llm_model": "llama-3.3-70b-versatile"
    },
    {
-    "span_id": "e9bd16b158f0a4fc",
-    "parent_span_id": "67f6f68b30533d39",
+    "span_id": "0339bcf3ee7c73b1",
+    "parent_span_id": "907017c2ee5125d9",
     "name": "tool.issue_refund",
-    "start_ms": 1846.6071,
-    "duration_ms": 50.5547,
+    "start_ms": 1102.3507,
+    "duration_ms": 2.9991,
     "error": true,
     "error_message": "refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
     "tool_name": "issue_refund",
@@ -87,11 +87,11 @@
     "llm_model": null
    },
    {
-    "span_id": "44cbd501afbb1804",
-    "parent_span_id": "67f6f68b30533d39",
+    "span_id": "4302cb88e2563a27",
+    "parent_span_id": "907017c2ee5125d9",
     "name": "llm.chat",
-    "start_ms": 1898.3243,
-    "duration_ms": 387.9777,
+    "start_ms": 1106.3527,
+    "duration_ms": 555.2633,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -99,23 +99,23 @@
     "llm_model": "llama-3.3-70b-versatile"
    },
    {
-    "span_id": "60ea1d6c08173a33",
-    "parent_span_id": "67f6f68b30533d39",
+    "span_id": "e828f79b9e0f65fb",
+    "parent_span_id": "907017c2ee5125d9",
     "name": "tool.search_kb",
-    "start_ms": 2290.1002,
+    "start_ms": 1664.6006,
     "duration_ms": 0.0,
     "error": false,
     "error_message": null,
     "tool_name": "search_kb",
-    "tool_input": "updated refund policy",
+    "tool_input": "refund_api_v2",
     "llm_model": null
    },
    {
-    "span_id": "d56e333f1a961b6c",
-    "parent_span_id": "67f6f68b30533d39",
+    "span_id": "f2c8cf60278da8a4",
+    "parent_span_id": "907017c2ee5125d9",
     "name": "llm.chat",
-    "start_ms": 2291.1645,
-    "duration_ms": 496.6952,
+    "start_ms": 1665.601,
+    "duration_ms": 600.9045,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -125,15 +125,15 @@
   ]
  },
  "fix": {
-  "trace_id": "9ea03a79be25b7ac4b7d9faf99f30103",
+  "trace_id": "c45a4f4ca72a2bfbf1533a79c97ba16d",
   "config_id": "cf-5",
   "spans": [
    {
-    "span_id": "c94a83a56f9de9f7",
+    "span_id": "fbee605881d2e512",
     "parent_span_id": "",
     "name": "replay_run",
     "start_ms": 0.0,
-    "duration_ms": 3221.5255,
+    "duration_ms": 2333.1028,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -141,11 +141,11 @@
     "llm_model": null
    },
    {
-    "span_id": "63c8b464d7274cde",
-    "parent_span_id": "c94a83a56f9de9f7",
+    "span_id": "8cf0f75b4ec916cf",
+    "parent_span_id": "fbee605881d2e512",
     "name": "llm.chat",
-    "start_ms": 1111.9807,
-    "duration_ms": 1012.0405,
+    "start_ms": 1076.3955,
+    "duration_ms": 417.7474,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -153,10 +153,10 @@
     "llm_model": "llama-3.3-70b-versatile"
    },
    {
-    "span_id": "0437c1a4a6a2b6d2",
-    "parent_span_id": "c94a83a56f9de9f7",
+    "span_id": "5f60351f0d94c24b",
+    "parent_span_id": "fbee605881d2e512",
     "name": "tool.search_kb",
-    "start_ms": 2127.027,
+    "start_ms": 1498.1432,
     "duration_ms": 0.0,
     "error": false,
     "error_message": null,
@@ -165,11 +165,11 @@
     "llm_model": null
    },
    {
-    "span_id": "89d4d934fa09da4c",
-    "parent_span_id": "c94a83a56f9de9f7",
+    "span_id": "2e55a9350eeeb78a",
+    "parent_span_id": "fbee605881d2e512",
     "name": "llm.chat",
-    "start_ms": 2129.0288,
-    "duration_ms": 476.0171,
+    "start_ms": 1499.1457,
+    "duration_ms": 201.8529,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -177,10 +177,10 @@
     "llm_model": "llama-3.3-70b-versatile"
    },
    {
-    "span_id": "9f69ef5d91996cec",
-    "parent_span_id": "c94a83a56f9de9f7",
+    "span_id": "b51d721026abab81",
+    "parent_span_id": "fbee605881d2e512",
     "name": "tool.check_order",
-    "start_ms": 2609.586,
+    "start_ms": 1703.718,
     "duration_ms": 0.0,
     "error": false,
     "error_message": null,
@@ -189,11 +189,11 @@
     "llm_model": null
    },
    {
-    "span_id": "02a09f45c660f830",
-    "parent_span_id": "c94a83a56f9de9f7",
+    "span_id": "36967eb9ccbca642",
+    "parent_span_id": "fbee605881d2e512",
     "name": "llm.chat",
-    "start_ms": 2612.0347,
-    "duration_ms": 201.0822,
+    "start_ms": 1705.3269,
+    "duration_ms": 280.0739,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -201,11 +201,11 @@
     "llm_model": "llama-3.3-70b-versatile"
    },
    {
-    "span_id": "fb40de056a408096",
-    "parent_span_id": "c94a83a56f9de9f7",
+    "span_id": "c08f0d7cd14f11c0",
+    "parent_span_id": "fbee605881d2e512",
     "name": "tool.issue_refund",
-    "start_ms": 2816.4492,
-    "duration_ms": 0.5488,
+    "start_ms": 1989.7729,
+    "duration_ms": 0.0,
     "error": false,
     "error_message": null,
     "tool_name": "issue_refund",
@@ -213,11 +213,11 @@
     "llm_model": null
    },
    {
-    "span_id": "680c3ce228376f16",
-    "parent_span_id": "c94a83a56f9de9f7",
+    "span_id": "d0e558d7cb1a1276",
+    "parent_span_id": "fbee605881d2e512",
     "name": "llm.chat",
-    "start_ms": 2819.0653,
-    "duration_ms": 400.1028,
+    "start_ms": 1992.108,
+    "duration_ms": 339.9849,
     "error": false,
     "error_message": null,
     "tool_name": null,
@@ -233,7 +233,34 @@
    "temperature": 0.8,
    "fix_applied": false,
    "success": false,
-   "trace_id": "c8e7807228b0d5c36c7305b970f2c2b8",
+   "trace_id": "920c0e03a040045319a6669fbe84ad30",
+   "reason": "Still using deprecated refund_api_v1, so the same failure was reproduced."
+  },
+  {
+   "config_id": "cf-2",
+   "model": "llama-3.3-70b-versatile",
+   "temperature": 0,
+   "fix_applied": false,
+   "success": false,
+   "trace_id": "a596694e020c3d19d83ad78bfa1c5355",
+   "reason": "Still using deprecated refund_api_v1, so the same failure was reproduced."
+  },
+  {
+   "config_id": "cf-3",
+   "model": "gemini-2.5-flash",
+   "temperature": 0.8,
+   "fix_applied": false,
+   "success": false,
+   "trace_id": "38cb573a5421f094ce403e91fb76bee9",
+   "reason": "Still using deprecated refund_api_v1, so the same failure was reproduced."
+  },
+  {
+   "config_id": "cf-4",
+   "model": "gemini-2.5-flash",
+   "temperature": 0,
+   "fix_applied": false,
+   "success": false,
+   "trace_id": "0b4eb3612652b1e8ededcb59cf224c7e",
    "reason": "Still using deprecated refund_api_v1, so the same failure was reproduced."
   },
   {
@@ -242,7 +269,7 @@
    "temperature": 0.8,
    "fix_applied": true,
    "success": true,
-   "trace_id": "9ea03a79be25b7ac4b7d9faf99f30103"
+   "trace_id": "c45a4f4ca72a2bfbf1533a79c97ba16d"
   }
  ],
  "divergence": {
@@ -261,45 +288,45 @@
  },
  "investigation": {
   "investigated": true,
-  "confidence": 100.0,
+  "confidence": 97,
   "verdict_cached": true
  },
  "impact": {
   "original": {
-   "tokens": 2840,
+   "tokens": 2760,
    "llm_calls": 5,
-   "avg_latency_ms": 541.33044,
-   "exec_ms": 2706.6522,
+   "avg_latency_ms": 447.1801,
+   "exec_ms": 2235.9005,
    "model": "llama-3.3-70b-versatile",
-   "cost_usd": 0.0019879999999999997
+   "cost_usd": 0.0019319999999999997
   },
   "fix": {
-   "tokens": 2356,
+   "tokens": 1913,
    "llm_calls": 4,
-   "avg_latency_ms": 522.31065,
-   "exec_ms": 2089.2426,
+   "avg_latency_ms": 309.914775,
+   "exec_ms": 1239.6591,
    "model": "llama-3.3-70b-versatile",
-   "cost_usd": 0.0016492
+   "cost_usd": 0.0013391
   },
   "deltas": {
-   "tokens": -484,
-   "avg_latency_ms": -19.019789999999944,
-   "exec_ms": -617.4096,
-   "cost_usd": -0.0003387999999999998
+   "tokens": -847,
+   "avg_latency_ms": -137.26532499999996,
+   "exec_ms": -996.2414000000001,
+   "cost_usd": -0.0005928999999999997
   },
   "pct": {
-   "tokens": -17.0,
-   "avg_latency_ms": -3.5,
-   "exec_ms": -22.8,
-   "cost_usd": -17.0
+   "tokens": -30.7,
+   "avg_latency_ms": -30.7,
+   "exec_ms": -44.6,
+   "cost_usd": -30.7
   }
  },
  "confidence_breakdown": {
-  "confidence_pct": 100,
+  "confidence_pct": 97,
   "signals": [
    {
     "label": "Replay consistency",
-    "detail": "1/1 counterfactuals reproduced the failure",
+    "detail": "4/4 counterfactuals reproduced the failure",
     "met": true
    },
    {
@@ -319,11 +346,25 @@
    },
    {
     "label": "Corroborating telemetry",
-    "detail": "2 linked replay traces recorded in SigNoz",
+    "detail": "5 linked replay traces recorded in SigNoz",
     "met": true
    }
   ],
   "signals_met": 5,
   "signals_total": 5
+ },
+ "context": {
+  "customer": "Cancel order #847 and issue refund",
+  "application": "AI Customer Support",
+  "service": "Refund Service",
+  "model": "Llama 3.3 70B",
+  "tool": "issue_refund()",
+  "status": "Fix validated"
+ },
+ "summary": "A cancellation-and-refund request failed. SigNoz captured the incident; Flight Recorder replayed it across counterfactuals and traced it to the stale refund policy, validating a fix.",
+ "replay_stats": {
+  "counterfactuals": 5,
+  "validated": 1,
+  "failed": 4
  }
 }

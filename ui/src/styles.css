@@ -167,6 +167,43 @@ tbody tr:last-child td { border-bottom: none; }
 
 @media (max-width: 800px) { .wf-grid { grid-template-columns: 1fr; } }
 
+/* ---------- incident summary + context ---------- */
+.incident-summary {
+  margin-top: 16px; border-left: 3px solid var(--blue);
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.summary-badge {
+  flex-shrink: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--blue); background: rgba(91, 157, 217, 0.12);
+  border: 1px solid var(--blue); border-radius: 999px; padding: 4px 10px; margin-top: 1px;
+}
+.incident-summary p { margin: 2px 0; font-size: 14px; line-height: 1.5; }
+
+.incident-context { margin-top: 12px; }
+.ctx-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.ctx-item { min-width: 0; }
+.ctx-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.ctx-value { font-size: 14px; font-weight: 600; margin-top: 3px; word-break: break-word; }
+.ctx-value.ctx-status { color: var(--green); }
+
+.replay-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+.rstat {
+  background: var(--panel-raised); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; text-align: center;
+}
+.rstat-num { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.rstat.good .rstat-num { color: var(--green); }
+.rstat.bad .rstat-num { color: var(--red); }
+.rstat-label { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+@media (max-width: 900px) {
+  .ctx-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+  .ctx-grid { grid-template-columns: repeat(2, 1fr); }
+  .incident-summary { flex-direction: column; gap: 8px; }
+}
+
 /* ---------- engineer action center ---------- */
 .action-center { margin-top: 16px; }
 .action-intro { color: var(--muted); font-size: 13px; margin: 0 0 12px; }

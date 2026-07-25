@@ -99,7 +99,21 @@ def replay_cost():
     cost = sum(s["contribution"]["replay"]["cost_usd"] for s in seeds)
     durs = [s["contribution"]["replay"]["avg_duration_ms"] for s in seeds]
     lats = [s["contribution"]["replay"]["avg_latency_ms"] for s in seeds]
-    model = seeds[0]["contribution"]["replay"]["model"] if seeds else None
+
+    by_model: dict[str, dict] = {}
+    for s in seeds:
+        for m in s["contribution"]["replay"].get("by_model", []):
+            agg = by_model.setdefault(m["model"], {"replays": 0, "tokens": 0, "cost_usd": 0.0,
+                                                   "_durs": []})
+            agg["replays"] += m["replays"]
+            agg["tokens"] += m["tokens"]
+            agg["cost_usd"] += m["cost_usd"]
+            agg["_durs"].append(m.get("avg_duration_ms", 0.0))
+    by_model_list = [
+        {"model": name, "replays": a["replays"], "tokens": a["tokens"], "cost_usd": a["cost_usd"],
+         "avg_duration_ms": (sum(a["_durs"]) / len(a["_durs"])) if a["_durs"] else 0.0}
+        for name, a in sorted(by_model.items(), key=lambda kv: -kv[1]["cost_usd"])
+    ]
     return {
         "replay_count": runs,
         "total_tokens": tokens,
@@ -107,10 +121,7 @@ def replay_cost():
         "avg_tokens": (tokens / runs) if runs else 0,
         "avg_duration_ms": (sum(durs) / len(durs)) if durs else 0.0,
         "avg_latency_ms": (sum(lats) / len(lats)) if lats else 0.0,
-        "by_model": ([{"model": model, "replays": runs, "tokens": tokens,
-                       "cost_usd": cost,
-                       "avg_duration_ms": (sum(durs) / len(durs)) if durs else 0.0}]
-                     if seeds else []),
+        "by_model": by_model_list,
     }
 
 

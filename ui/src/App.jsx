@@ -6,6 +6,7 @@ import Matrix from "./Matrix.jsx";
 import VerdictCard from "./VerdictCard.jsx";
 import DeltaImpact from "./DeltaImpact.jsx";
 import ActionCenter from "./ActionCenter.jsx";
+import IncidentContext from "./IncidentContext.jsx";
 import { api } from "./api.js";
 
 export default function App() {
@@ -93,6 +94,8 @@ export default function App() {
 
           {incident && (
             <>
+              <IncidentContext incident={incident} />
+
               <Timeline incident={incident} verdict={verdict} />
 
               <section className="waterfalls">

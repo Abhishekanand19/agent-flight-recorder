@@ -288,7 +288,7 @@
  },
  "investigation": {
   "investigated": true,
-  "confidence": 100.0,
+  "confidence": 98,
   "verdict_cached": true
  },
  "impact": {
@@ -322,7 +322,7 @@
   }
  },
  "confidence_breakdown": {
-  "confidence_pct": 100,
+  "confidence_pct": 98,
   "signals": [
    {
     "label": "Replay consistency",
@@ -352,5 +352,19 @@
   ],
   "signals_met": 5,
   "signals_total": 5
+ },
+ "context": {
+  "customer": "Refund order #123",
+  "application": "AI Customer Support",
+  "service": "Refund Service",
+  "model": "Llama 3.3 70B",
+  "tool": "issue_refund()",
+  "status": "Fix validated"
+ },
+ "summary": "The AI support agent failed while processing a refund. SigNoz captured the failed trace; Flight Recorder replayed the execution, found the root cause, validated a fix, and generated engineer actions.",
+ "replay_stats": {
+  "counterfactuals": 5,
+  "validated": 1,
+  "failed": 4
  }
 }

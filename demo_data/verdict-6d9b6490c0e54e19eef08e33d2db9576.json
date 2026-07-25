@@ -1,6 +1,6 @@
 {
  "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` method for issuing the refund, failing to identify and utilize the required `refund_api_v2` method.",
- "confidence_pct": 98,
+ "confidence_pct": 97,
  "suggested_fix": "Update the tool definitions or the LLM's knowledge base to explicitly state that `refund_api_v1` is decommissioned and `refund_api_v2` is the current required method for refunds.",
  "supporting_evidence": [
   "original_errors: 'refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token'",
