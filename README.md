@@ -15,7 +15,7 @@ OpenTelemetry-native incident investigation for LLM agents, built for the **SigN
 ![SigNoz](https://img.shields.io/badge/SigNoz-observability-E75A3B)
 ![License](https://img.shields.io/badge/License-MIT-3DA639)
 
-**[▶️ Watch the Demo](https://www.youtube.com/watch?v=CaW0NiiKbjc)** · [Quick Start](#-quick-start) · [Architecture](#️-architecture)
+**[🌐 Live Demo](https://agent-flight-recorder-pink.vercel.app/)** · **[▶️ Watch the Demo](https://www.youtube.com/watch?v=CaW0NiiKbjc)** · [Quick Start](#-quick-start) · [Architecture](#️-architecture)
 
 </div>
 

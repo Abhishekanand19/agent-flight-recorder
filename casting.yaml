@@ -1,0 +1,25 @@
+# SigNoz Foundry casting manifest for Agent Flight Recorder.
+#
+# Reproduces this project's self-hosted SigNoz deployment (Docker Compose)
+# and reattaches the existing data volumes so telemetry history is preserved.
+#
+#   foundryctl gauge -f casting.yaml   # validate the environment
+#   foundryctl forge -f casting.yaml   # render pours/ and write casting.yaml.lock
+#   foundryctl cast  -f casting.yaml   # deploy the stack
+#
+# Original stack: signoz/docker-compose.yaml (SigNoz v0.99.0), with
+# metastore=sqlite, telemetrykeeper=zookeeper, telemetrystore=clickhouse.
+apiVersion: v1alpha1
+kind: Installation
+metadata:
+  name: signoz
+spec:
+  deployment:
+    flavor: compose
+    mode: docker
+  metastore:
+    kind: sqlite
+  telemetrykeeper:
+    kind: zookeeper
+  telemetrystore:
+    kind: clickhouse
