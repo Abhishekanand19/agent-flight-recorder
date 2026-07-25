@@ -1,0 +1,130 @@
+{
+ "seeds": [
+  {
+   "trace_id": "bafff7b8cb0e4e3a567472da3042bf33",
+   "row": {
+    "trace_id": "bafff7b8cb0e4e3a567472da3042bf33",
+    "request": "Please refund order #123.",
+    "started_at_ns": 1784915828551221700,
+    "error": "refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
+    "replay_count": 2,
+    "fix_validated": true,
+    "investigated": true,
+    "confidence": 100.0,
+    "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` for the refund request, failing to identify and apply the required `refund_api_v2` and an approval token, even after initial knowledge base searches.",
+    "root_cause_seconds": 279.1547662,
+    "auto": true,
+    "signoz_url": "http://localhost:8080/trace/bafff7b8cb0e4e3a567472da3042bf33"
+   },
+   "contribution": {
+    "tools": {
+     "issue_refund": {
+      "failures": 1,
+      "calls": 1
+     },
+     "search_kb": {
+      "failures": 0,
+      "calls": 2
+     },
+     "check_order": {
+      "failures": 0,
+      "calls": 1
+     }
+    },
+    "replay": {
+     "count": 2,
+     "successes": 1,
+     "tokens": 4724,
+     "cost_usd": 0.0033,
+     "avg_duration_ms": 3900.0,
+     "avg_latency_ms": 340.0,
+     "model": "llama-3.3-70b-versatile"
+    }
+   }
+  },
+  {
+   "trace_id": "a1474403c5757fe92b72f4fe90d5758a",
+   "row": {
+    "trace_id": "a1474403c5757fe92b72f4fe90d5758a",
+    "request": "Please refund order #123.",
+    "started_at_ns": 1784815351377645900,
+    "error": "refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
+    "replay_count": 2,
+    "fix_validated": true,
+    "investigated": true,
+    "confidence": 95.0,
+    "root_cause": "The LLM attempted to use a decommissioned API version (`refund_api_v1`) for issuing a refund, indicating outdated knowledge about the `issue_refund` tool's current requirements, specifically the need for `refund_api_v2` and an approval token.",
+    "root_cause_seconds": 41.30182,
+    "auto": true,
+    "signoz_url": "http://localhost:8080/trace/a1474403c5757fe92b72f4fe90d5758a"
+   },
+   "contribution": {
+    "tools": {
+     "issue_refund": {
+      "failures": 1,
+      "calls": 1
+     },
+     "search_kb": {
+      "failures": 0,
+      "calls": 2
+     },
+     "check_order": {
+      "failures": 0,
+      "calls": 1
+     }
+    },
+    "replay": {
+     "count": 2,
+     "successes": 1,
+     "tokens": 4724,
+     "cost_usd": 0.0033,
+     "avg_duration_ms": 3900.0,
+     "avg_latency_ms": 340.0,
+     "model": "llama-3.3-70b-versatile"
+    }
+   }
+  },
+  {
+   "trace_id": "e608ffff40c13555457e09e244f564eb",
+   "row": {
+    "trace_id": "e608ffff40c13555457e09e244f564eb",
+    "request": "Please refund order #123.",
+    "started_at_ns": 1784810654399542000,
+    "error": "refund_api_v1 was decommissioned; refunds require refund_api_v2 with an approval token",
+    "replay_count": 9,
+    "fix_validated": true,
+    "investigated": true,
+    "confidence": 100.0,
+    "root_cause": "The LLM incorrectly attempted to use the decommissioned `refund_api_v1` method for issuing the refund, failing to identify and utilize the required `refund_api_v2` method.",
+    "root_cause_seconds": 4638.4405391,
+    "auto": true,
+    "signoz_url": "http://localhost:8080/trace/e608ffff40c13555457e09e244f564eb"
+   },
+   "contribution": {
+    "tools": {
+     "issue_refund": {
+      "failures": 1,
+      "calls": 1
+     },
+     "search_kb": {
+      "failures": 0,
+      "calls": 2
+     },
+     "check_order": {
+      "failures": 0,
+      "calls": 1
+     }
+    },
+    "replay": {
+     "count": 2,
+     "successes": 1,
+     "tokens": 4724,
+     "cost_usd": 0.0033,
+     "avg_duration_ms": 3900.0,
+     "avg_latency_ms": 340.0,
+     "model": "llama-3.3-70b-versatile"
+    }
+   }
+  }
+ ]
+}
