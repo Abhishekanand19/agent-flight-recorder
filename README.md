@@ -1,4 +1,6 @@
-<!-- TODO: Replace this comment with the Hero Banner image, e.g. ![Agent Flight Recorder](docs/hero-banner.png) -->
+<p align="center">
+<img src="docs/hero-banner.png" width="100%"/>
+</p>
 
 <div align="center">
 
@@ -15,7 +17,6 @@ OpenTelemetry-native incident investigation for LLM agents, built for the **SigN
 ![SigNoz](https://img.shields.io/badge/SigNoz-observability-E75A3B)
 ![License](https://img.shields.io/badge/License-MIT-3DA639)
 
-**[🌐 Live Demo](https://agent-flight-recorder-pink.vercel.app/)** · **[▶️ Watch the Demo](https://www.youtube.com/watch?v=CaW0NiiKbjc)** · [Quick Start](#-quick-start) · [Architecture](#️-architecture)
 
 </div>
 
@@ -23,46 +24,72 @@ OpenTelemetry-native incident investigation for LLM agents, built for the **SigN
 
 ## 🎬 Demo
 
-<!-- TODO: Replace this comment with the product workflow GIF, e.g. ![Product demo](docs/demo.gif) -->
+<p align="center">
+  <img src="docs/demo.gif" width="100%"/>
+</p>
 
-<div align="center">
+<p align="center">
 
-[![Watch the demo](https://img.youtube.com/vi/CaW0NiiKbjc/maxresdefault.jpg)](https://www.youtube.com/watch?v=CaW0NiiKbjc)
+🎥 **[Watch Our 3-Minute Demo](https://www.youtube.com/watch?v=CaW0NiiKbjc)** &nbsp;&nbsp;|&nbsp;&nbsp;
+🌐 **[please visit our Live Website](https://agent-flight-recorder-pink.vercel.app/)**
 
-▶️ **[Watch the 3-minute walkthrough on YouTube →](https://www.youtube.com/watch?v=CaW0NiiKbjc)**
-
-</div>
-
----
-
-## ❌ The Problem
-
-Traditional observability answers one question: **"what failed?"** — a red span, a stack trace, a 500.
-
-For AI agents, that is not enough. Agents fail **silently** and **non-reproducibly**: a support agent refuses a valid refund at 2 a.m., and "the span errored" tells you nothing about **why the model made a bad decision**, whether a different model or temperature would have avoided it, or what the minimal fix is.
-
-> You can see the crash. You still can't explain it, reproduce it, or prove your fix works.
+</p>
 
 ---
 
-## ✅ The Solution
+## 🤔 The Problem
 
-**Agent Flight Recorder** treats every agent run like an aircraft flight — everything is recorded, any incident can be **replayed under counterfactual conditions**, and an AI **investigator** reads the evidence and names the root cause. The investigator is itself on the recorder.
+AI agents are getting smarter, but debugging them is still frustrating.
+
+When an AI agent fails, observability platforms can show **traces, logs, and metrics**. That's useful—but engineers still have to answer the hardest questions themselves:
+
+- 🤷 Why did the agent make this decision?
+- 🔄 Can the failure be reproduced?
+- 🧪 Would another model or configuration behave differently?
+- ✅ Has the proposed fix actually solved the problem?
+
+That's the gap we wanted to solve.
+
+---
+
+## ✈️ Our Solution
+
+**Agent Flight Recorder** is an AI investigation layer built on top of **SigNoz**.
+
+Instead of stopping at observability, it automatically records every AI incident, replays it under different conditions, identifies the root cause, validates the fix, and gives engineers clear next steps—all from one dashboard.
 
 ```mermaid
-flowchart LR
-    A["👤 Customer<br/>request"] --> B["🤖 AI Support<br/>Agent"]
-    B --> C["❌ Agent calls a<br/>deprecated tool"]
-    C --> D[("📡 SigNoz<br/>traces · logs · metrics")]
-    D --> E["✈️ Flight Recorder<br/>detects incident"]
-    E --> F["⚙️ Replay Engine<br/>reproduces failure"]
-    F --> G["🔀 Counterfactual<br/>replay validates fix"]
-    G --> H["🔍 AI Investigator<br/>finds root cause"]
-    H --> I["🛠️ Engineer exports<br/>validated fix"]
+flowchart TD
+
+A["👤 Customer Request"]
+--> B["🤖 AI Agent"]
+
+B
+--> C["❌ AI Failure"]
+
+C
+--> D["📡 SigNoz<br/>Traces • Logs • Metrics"]
+
+D
+--> E["✈️ Agent Flight Recorder"]
+
+E
+--> F["🔄 Replay Engine"]
+
+F
+--> G["🧪 Counterfactual Replay"]
+
+G
+--> H["🧠 AI Crash Investigator"]
+
+H
+--> I["📚 Knowledge Base"]
+
+I
+--> J["✅ Validated Fix & Engineer Actions"]
 ```
 
 ---
-
 ## ✨ Key Features
 
 | | Feature | What it does |
@@ -80,60 +107,83 @@ flowchart LR
 
 ## 🖥️ Product Preview
 
-### Operations Center
+<table>
+<tr>
+<td width="50%" align="center">
 
-![Operations Center dashboard](docs/screenshot-dashboard.png)
+### 🏠 Operations Center
 
-*Fleet view — live incident queue with real customer requests, replay cost broken down by model, top failing tools, replay success rate, and Mean Time To Root Cause.*
+<img src="docs/dashboard.png" width="100%"/>
 
-### Incident Investigation
+*Monitor live AI incidents, replay status, replay cost, top failing tools, and overall system health from a single dashboard.*
 
-![Incident investigation](docs/screenshot-investigation.png)
+</td>
 
-*One incident end-to-end — request/service/model/tool context, a 5-run counterfactual matrix (each failing for a distinct technical reason), delta impact, and an evidence-backed root-cause verdict with a confidence scorecard.*
+<td width="50%" align="center">
 
-### SigNoz — traces, logs & metrics
+### 🔍 Incident Investigation
 
-<!-- TODO: add docs/screenshot-signoz.png (SigNoz UI at http://localhost:8080 requires your admin login to capture) -->
+<img src="docs/investigation.png" width="100%"/>
 
-*The agent, replay engine and investigator all emit OpenTelemetry spans and structured logs into SigNoz. A provisioned dashboard tracks token cost per step, agent failure rate, the replay success matrix, and investigator confidence over time.*
+*Dive into an incident with counterfactual replay, root cause analysis, confidence breakdown, and validated engineering actions.*
 
----
+</td>
+</tr>
+
+<tr>
+<td width="50%" align="center">
+
+### 📈 Replay Cost & Resources
+
+<img src="docs/Screenshot-token cost.png" width="100%"/>
+
+*Track execution time, latency, token usage, and estimated inference cost for every replay.*
+
+</td>
+
+<td width="50%" align="center">
+
+### 🎯 Root Cause Analysis
+
+<img src="docs/root-cause.png" width="100%"/>
+
+*Evidence-backed investigation showing why the failure happened and how confident the system is about its conclusion.*
+
+</td>
+</tr>
+
+<tr>
+<td width="50%" align="center">
+
+### 📊 SigNoz Metrics
+
+<img src="docs/signoz-metrics.png" width="100%"/>
+
+*Monitor latency, throughput, resource usage, and overall health of the AI investigation pipeline.*
+
+</td>
+
+<td width="50%" align="center">
+
+### 🚨 SigNoz Exceptions
+
+<img src="docs/signoz-exceptions.png" width="100%"/>
+
+*Recurring failures are automatically grouped, helping engineers focus on the highest-impact issues.*
+
+</td>
+</tr>
+</table>
 
 ## 🏗️ Architecture
 
-```mermaid
-flowchart TB
-    subgraph AGENT["🤖 Instrumented Agent"]
-        LG["LangGraph support agent<br/>Groq · Llama 3.3 70B"]
-    end
-    subgraph OBS["📡 Observability (SigNoz)"]
-        OT["OpenTelemetry SDK<br/>OTLP :4317"]
-        CH[("ClickHouse<br/>traces · logs · metrics")]
-    end
-    subgraph FR["✈️ Flight Recorder"]
-        RE["⚙️ Replay Engine<br/>counterfactuals + fix"]
-        CI["🔍 Crash Investigator<br/>Gemini 2.5 · meta-traced"]
-        KB["🧠 Incident Knowledge Base"]
-    end
-    subgraph WEB["🖥️ Web"]
-        API["FastAPI backend"]
-        RUI["React Operations Center"]
-    end
-    MCP["🤖 SigNoz MCP + Gemini assistant"]
+<p align="center">
+<img src="docs/Screenshot-Architecture.png" width="95%"/>
+</p>
 
-    LG -->|OTLP spans + logs| OT --> CH
-    CH -->|pull failed trace| RE -->|linked replay traces| CH
-    RE --> CI -->|investigation spans| CH
-    CI --> KB
-    CH -->|zero-auth query| API --> RUI
-    MCP -->|official MCP tools| CH
-    MCP --> API
-```
-
-Everything links back: replay traces carry `replay.of=<original>`, investigations carry `investigation.of` — isolated traces become one incident narrative.
-
----
+<p align="center">
+<i>High-level architecture showing how the AI Agent, OpenTelemetry, SigNoz, Replay Engine, Crash Investigator, and Agent Flight Recorder work together.</i>
+</p>
 
 ## 🧰 Tech Stack
 
